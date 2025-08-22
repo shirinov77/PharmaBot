@@ -1,9 +1,9 @@
 package org.example.pharmaproject.bot;
 
+import org.example.pharmaproject.bot.handlers.*;
 import org.example.pharmaproject.bot.utils.BotUtils;
 import org.example.pharmaproject.entities.User;
-import org.example.pharmaproject.services.*;
-import org.example.pharmaproject.bot.handlers.*;
+import org.example.pharmaproject.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,159 +17,181 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Component
 public class PharmacyBot extends TelegramLongPollingBot {
 
-    @Value("${telegram.bot.username}")
+    private static final Logger LOGGER = Logger.getLogger(PharmacyBot.class.getName());
+
+    @Value("${telegrambot.userName}")
     private String botUsername;
 
-    @Value("${telegram.bot.token}")
+    @Value("${telegrambot.botToken}")
     private String botToken;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final StartHandler startHandler;
+    private final MenuHandler menuHandler;
+    private final SearchHandler searchHandler;
+    private final BasketHandler basketHandler;
+    private final OrderHandler orderHandler;
 
     @Autowired
-    private StartHandler startHandler;
-
-    @Autowired
-    private MenuHandler menuHandler;
-
-    @Autowired
-    private SearchHandler searchHandler;
-
-    @Autowired
-    private BasketHandler basketHandler;
-
-    @Autowired
-    private OrderHandler orderHandler;
-
-    @Override
-    public String getBotUsername() {
-        return botUsername;
-    }
-
-    @Override
-    public String getBotToken() {
-        return botToken;
+    public PharmacyBot(UserService userService,
+                       StartHandler startHandler,
+                       MenuHandler menuHandler,
+                       SearchHandler searchHandler,
+                       BasketHandler basketHandler,
+                       OrderHandler orderHandler) {
+        this.userService = userService;
+        this.startHandler = startHandler;
+        this.menuHandler = menuHandler;
+        this.searchHandler = searchHandler;
+        this.basketHandler = basketHandler;
+        this.orderHandler = orderHandler;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage()) {
-            handleMessage(update.getMessage());
-        } else if (update.hasCallbackQuery()) {
-            handleCallbackQuery(update.getCallbackQuery());
+        try {
+            if (update.hasMessage()) {
+                handleMessage(update.getMessage());
+            } else if (update.hasCallbackQuery()) {
+                handleCallbackQuery(update.getCallbackQuery());
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Xato onUpdateReceived ichida: " + e.getMessage(), e);
         }
     }
 
     private void handleMessage(Message message) {
         String chatId = message.getChatId().toString();
-        String text = message.hasText() ? message.getText() : "";
+        String text = message.hasText() ? message.getText().trim() : "";
 
         User user = userService.findByTelegramId(message.getFrom().getId())
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setTelegramId(message.getFrom().getId());
-                    newUser.setName(message.getFrom().getFirstName());
-                    newUser.setLanguage("uz");
-                    return userService.save(newUser);
-                });
+                .orElseGet(() -> createNewUser(message));
 
-        Object response; // <-- BotApiMethod yoki SendPhoto bo‘lishi mumkin
+        Object response;
 
-        if ("AWAITING_ADDRESS".equals(user.getState())) {
-            response = handleAddressInput(message, user, text);
-        } else {
-            switch (text) {
-                case "/start" -> response = startHandler.handleStart(message, user);
-                case "Menyu", "/menu" -> response = menuHandler.handleMenu(message, user);
-                case "Savat", "/basket" -> response = basketHandler.handleBasket(message, user);
-                case "Buyurtmalarim", "/orders" -> response = orderHandler.handleOrders(message, user);
-                case "Tilni o'zgartirish", "/language" ->
-                        response = startHandler.handleLanguageSelection(message, user);
-                case "Manzilni o'zgartirish", "/address" -> {
+        try {
+            if ("AWAITING_ADDRESS".equals(user.getState())) {
+                response = handleAddressInput(message, user, text);
+            } else {
+                // Tugmalar matnlarini tilga qarab olish
+                String menuText = BotUtils.getLocalizedMessage(user.getLanguage(), "menu");
+                String searchText = BotUtils.getLocalizedMessage(user.getLanguage(), "search");
+                String basketText = BotUtils.getLocalizedMessage(user.getLanguage(), "basket");
+                String ordersText = BotUtils.getLocalizedMessage(user.getLanguage(), "orders");
+                String changeLangText = BotUtils.getLocalizedMessage(user.getLanguage(), "change_language");
+                String changeAddressText = BotUtils.getLocalizedMessage(user.getLanguage(), "change_address");
+
+                if (text.equalsIgnoreCase(menuText)) {
+                    response = menuHandler.handleMenu(message, user);
+                } else if (text.equalsIgnoreCase(searchText)) {
+                    response = searchHandler.handleSearchPrompt(message, user);
+                } else if (text.equalsIgnoreCase(basketText)) {
+                    response = basketHandler.handleBasket(message, user);
+                } else if (text.equalsIgnoreCase(ordersText)) {
+                    response = orderHandler.handleOrders(message, user);
+                } else if (text.equalsIgnoreCase(changeLangText)) {
+                    response = startHandler.handleLanguageSelection(message, user);
+                } else if (text.equalsIgnoreCase(changeAddressText)) {
                     user.setState("AWAITING_ADDRESS");
                     userService.save(user);
-                    response = new SendMessage(chatId, getLocalizedMessage(user.getLanguage(), "enter_address"));
-                }
-                default -> {
-                    if (text.startsWith("Qidir: ")) {
-                        String query = text.substring(7).trim();
-                        response = searchHandler.handleSearch(message, query, user);
-                    } else {
-                        response = new SendMessage(chatId, getLocalizedMessage(user.getLanguage(), "unknown_command"));
-                    }
+                    response = new SendMessage(chatId,
+                            BotUtils.getLocalizedMessage(user.getLanguage(), "enter_address"));
+                } else if (text.startsWith("Qidir: ") || text.startsWith("🔎 Поиск: ") || text.startsWith("🔍 Search: ")) {
+                    String query = text.substring(text.indexOf(":") + 1).trim();
+                    response = searchHandler.handleSearch(message, query, user);
+                } else if (text.equals("/start")) {
+                    response = startHandler.handleStart(message, user);
+                } else {
+                    response = new SendMessage(chatId,
+                            BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
                 }
             }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "❌ Message handle qilishda xato: " + e.getMessage(), e);
+            response = new SendMessage(chatId, "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko‘ring.");
         }
 
         executeResponse(response);
     }
 
+    private User createNewUser(Message message) {
+        User newUser = new User();
+        newUser.setTelegramId(message.getFrom().getId());
+        newUser.setName(Optional.ofNullable(message.getFrom().getFirstName()).orElse("Foydalanuvchi"));
+        newUser.setLanguage("uz");
+        newUser.setState(null);
+        LOGGER.info("✅ Yangi foydalanuvchi qo‘shildi: " + newUser.getName());
+        return userService.save(newUser);
+    }
+
     private BotApiMethod<?> handleAddressInput(Message message, User user, String address) {
         String chatId = message.getChatId().toString();
+
         userService.updateUserDetails(user.getTelegramId(), null, null, address);
         user.setState(null);
         userService.save(user);
 
-        SendMessage response = new SendMessage(chatId, getLocalizedMessage(user.getLanguage(), "address_updated"));
+        SendMessage response = new SendMessage(chatId,
+                BotUtils.getLocalizedMessage(user.getLanguage(), "address_updated"));
         response.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
         return response;
     }
 
-    private void handleCallbackQuery(CallbackQuery callbackQuery) {
-        String chatId = callbackQuery.getMessage().getChatId().toString();
-        String data = callbackQuery.getData();
-        int messageId = callbackQuery.getMessage().getMessageId();
+    private void handleCallbackQuery(CallbackQuery query) {
+        String chatId = query.getMessage().getChatId().toString();
+        String data = query.getData();
+        int messageId = query.getMessage().getMessageId();
 
-        User user = userService.findByTelegramId(callbackQuery.getFrom().getId())
-                .orElse(null);
-
+        User user = userService.findByTelegramId(query.getFrom().getId()).orElse(null);
         Object response;
 
         try {
-            if (user == null) throw new IllegalStateException("Foydalanuvchi topilmadi");
+            if (user == null) throw new IllegalStateException("Foydalanuvchi topilmadi!");
 
             if (data.startsWith("category_")) {
                 String categoryId = data.substring(9);
-                response = menuHandler.handleCategorySelection(callbackQuery, categoryId);
+                response = menuHandler.handleCategorySelection(query, categoryId);
             } else if (data.startsWith("product_")) {
                 String productId = data.substring(8, data.lastIndexOf("_"));
-                if (data.endsWith("_add")) {
-                    response = basketHandler.handleAddToBasket(callbackQuery, productId);
-                } else {
-                    response = searchHandler.handleProductDetails(callbackQuery, productId); // <-- bu SendPhoto qaytaradi
-                }
+                response = data.endsWith("_add")
+                        ? basketHandler.handleAddToBasket(query, productId)
+                        : searchHandler.handleProductDetails(query, productId);
             } else if (data.startsWith("basket_")) {
                 if (data.equals("basket_clear")) {
-                    response = basketHandler.handleClearBasket(callbackQuery);
+                    response = basketHandler.handleClearBasket(query);
                 } else if (data.equals("basket_checkout")) {
-                    response = orderHandler.handleCheckout(callbackQuery);
+                    response = orderHandler.handleCheckout(query);
                 } else if (data.startsWith("basket_remove_")) {
                     String productId = data.substring(13);
-                    response = basketHandler.handleRemoveFromBasket(callbackQuery, productId);
+                    response = basketHandler.handleRemoveFromBasket(query, productId);
                 } else {
                     response = defaultCallbackResponse(chatId, messageId, user);
                 }
             } else if (data.startsWith("order_")) {
                 String orderId = data.substring(6, data.lastIndexOf("_"));
                 if (data.endsWith("_confirm")) {
-                    response = orderHandler.handleConfirmOrder(callbackQuery, orderId);
+                    response = orderHandler.handleConfirmOrder(query, orderId);
                 } else if (data.endsWith("_cancel")) {
-                    response = orderHandler.handleCancelOrder(callbackQuery, orderId);
+                    response = orderHandler.handleCancelOrder(query, orderId);
                 } else {
                     response = defaultCallbackResponse(chatId, messageId, user);
                 }
             } else if (data.startsWith("lang_")) {
                 String lang = data.substring(5);
-                response = startHandler.handleLanguageChange(callbackQuery, lang);
+                response = startHandler.handleLanguageChange(query, lang);
             } else {
                 response = defaultCallbackResponse(chatId, messageId, user);
             }
 
         } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "❌ Callback ishlashda xato: " + e.getMessage(), e);
             response = defaultCallbackResponse(chatId, messageId, user);
         }
 
@@ -181,59 +203,34 @@ public class PharmacyBot extends TelegramLongPollingBot {
         EditMessageText editMessage = new EditMessageText();
         editMessage.setChatId(chatId);
         editMessage.setMessageId(messageId);
-        editMessage.setText(getLocalizedMessage(lang, "invalid_callback"));
+        editMessage.setText(BotUtils.getLocalizedMessage(lang, "invalid_callback"));
         return editMessage;
     }
 
-    /**
-     * Har qanday javobni (SendMessage, SendPhoto, EditMessageText) yuboradi
-     */
     private void executeResponse(Object response) {
         if (response == null) return;
         try {
-            if (response instanceof BotApiMethod<?> botApiMethod) {
-                execute(botApiMethod);
+            if (response instanceof SendMessage sendMessage) {
+                execute(sendMessage);
             } else if (response instanceof SendPhoto sendPhoto) {
                 execute(sendPhoto);
+            } else if (response instanceof EditMessageText editMessageText) {
+                execute(editMessageText);
+            } else if (response instanceof BotApiMethod<?> botApiMethod) {
+                execute(botApiMethod);
             }
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "❌ Telegram API xatosi: " + e.getMessage(), e);
         }
     }
 
-    private String getLocalizedMessage(String lang, String key) {
-        return switch (key) {
-            case "enter_address" -> switch (lang) {
-                case "uz" -> "Yangi manzilingizni kiriting:";
-                case "ru" -> "Введите новый адрес:";
-                case "en" -> "Enter your new address:";
-                default -> "Enter your new address:";
-            };
-            case "address_updated" -> switch (lang) {
-                case "uz" -> "✅ Manzil yangilandi!";
-                case "ru" -> "✅ Адрес обновлён!";
-                case "en" -> "✅ Address updated!";
-                default -> "Address updated!";
-            };
-            case "unknown_command" -> switch (lang) {
-                case "uz" -> "❓ Noto‘g‘ri buyruq. Iltimos, menyudan foydalaning.";
-                case "ru" -> "❓ Неверная команда. Пожалуйста, используйте меню.";
-                case "en" -> "❓ Invalid command. Please use the menu.";
-                default -> "Invalid command.";
-            };
-            case "invalid_callback" -> switch (lang) {
-                case "uz" -> "❌ Noto‘g‘ri callback ma’lumotlari.";
-                case "ru" -> "❌ Неверные данные callback.";
-                case "en" -> "❌ Invalid callback data.";
-                default -> "Invalid callback data.";
-            };
-            case "unknown_action" -> switch (lang) {
-                case "uz" -> "❓ Noma’lum amal. Iltimos, qaytadan urinib ko‘ring.";
-                case "ru" -> "❓ Неизвестное действие. Попробуйте снова.";
-                case "en" -> "❓ Unknown action. Please try again.";
-                default -> "Unknown action.";
-            };
-            default -> "Unknown message";
-        };
+    @Override
+    public String getBotUsername() {
+        return botUsername;
+    }
+
+    @Override
+    public String getBotToken() {
+        return botToken;
     }
 }

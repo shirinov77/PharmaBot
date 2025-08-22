@@ -1,44 +1,63 @@
 package org.example.pharmaproject.bot.handlers;
 
 import org.example.pharmaproject.bot.utils.BotUtils;
-import org.example.pharmaproject.entities.*;
-import org.example.pharmaproject.services.*;
+import org.example.pharmaproject.entities.User;
+import org.example.pharmaproject.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 @Component
 public class StartHandler {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
+    @Autowired
+    public StartHandler(UserService userService) {
+        this.userService = userService;
+    }
+
+    /**
+     * /start komandasi
+     */
     public BotApiMethod<?> handleStart(Message message, User user) {
         String chatId = message.getChatId().toString();
+        Long telegramId = message.getFrom().getId();
 
-        String text = getLocalizedMessage(user.getLanguage(), "welcome_message");
+        // DB dan userni olish yoki yangi yaratish
+        user = userService.findByTelegramId(telegramId)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setTelegramId(telegramId);
+                    newUser.setName(message.getFrom().getFirstName() != null ? message.getFrom().getFirstName() : "Foydalanuvchi");
+                    newUser.setLanguage(null); // startda til tanlash majburiy
+                    return userService.save(newUser);
+                });
 
-        SendMessage response = new SendMessage(chatId, text);
-        response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
+        // Til tanlanmagan bo‘lsa → til tanlash menyusini chiqaramiz
+        if (user.getLanguage() == null) {
+            SendMessage response = new SendMessage(chatId,
+                    "🌐 Iltimos, tilni tanlang:");
+            response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
+            return response;
+        }
+
+        // Aks holda → asosiy menyu
+        SendMessage response = new SendMessage(chatId,
+                BotUtils.getLocalizedMessage(user.getLanguage(), "welcome_message"));
+        response.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
         return response;
     }
 
-    public BotApiMethod<?> handleLanguageSelection(Message message, User user) {
-        String chatId = message.getChatId().toString();
-
-        String text = getLocalizedMessage(user.getLanguage(), "select_language");
-
-        SendMessage response = new SendMessage(chatId, text);
-        response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
-        return response;
-    }
-
+    /**
+     * Tilni o‘zgartirish (callback orqali)
+     */
     public BotApiMethod<?> handleLanguageChange(CallbackQuery query, String lang) {
         String chatId = query.getMessage().getChatId().toString();
-        int messageId = query.getMessage().getMessageId();
 
         User user = userService.findByTelegramId(query.getFrom().getId())
                 .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
@@ -46,38 +65,22 @@ public class StartHandler {
         user.setLanguage(lang);
         userService.save(user);
 
-        String text = getLocalizedMessage(lang, "language_changed");
-
-        SendMessage response = new SendMessage(chatId, text);
-        response.setReplyMarkup(BotUtils.getMainKeyboard(lang));
-        return response;
+        // ReplyKeyboardMarkup bilan SendMessage ishlatamiz
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText("✅ Til muvaffaqiyatli o‘zgartirildi!");
+        sendMessage.setReplyMarkup(BotUtils.getMainKeyboard(lang)); // asosiy menyu
+        return sendMessage;
     }
 
-    private String getLocalizedMessage(String lang, String key) {
-        switch (key) {
-            case "welcome_message":
-                return switch (lang) {
-                    case "uz" -> "Salom 👋 Apteka botiga xush kelibsiz!\n\nIltimos, tilni tanlang:";
-                    case "ru" -> "Здравствуйте 👋 Добро пожаловать в бот аптеки!\n\nПожалуйста, выберите язык:";
-                    case "en" -> "Hello 👋 Welcome to the Pharmacy Bot!\n\nPlease select a language:";
-                    default -> "Welcome!";
-                };
-            case "select_language":
-                return switch (lang) {
-                    case "uz" -> "Iltimos, tilni tanlang:";
-                    case "ru" -> "Пожалуйста, выберите язык:";
-                    case "en" -> "Please select a language:";
-                    default -> "Select language:";
-                };
-            case "language_changed":
-                return switch (lang) {
-                    case "uz" -> "Til o‘zgartirildi! Endi asosiy menyudan foydalaning.";
-                    case "ru" -> "Язык изменён! Используйте главное меню.";
-                    case "en" -> "Language changed! Use the main menu.";
-                    default -> "Language changed!";
-                };
-            default:
-                return "Unknown message";
-        }
+
+    /**
+     * /language yoki "Tilni o‘zgartirish" tugmasi
+     */
+    public BotApiMethod<?> handleLanguageSelection(Message message, User user) {
+        String chatId = message.getChatId().toString();
+        SendMessage response = new SendMessage(chatId, "🌐 Iltimos, tilni tanlang:");
+        response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
+        return response;
     }
 }

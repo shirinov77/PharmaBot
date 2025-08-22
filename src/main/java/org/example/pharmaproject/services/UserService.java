@@ -37,11 +37,15 @@ public class UserService {
     @Transactional
     public User save(User user) {
         if (user.getId() == null && user.getTelegramId() != null) {
-            Basket basket = basketService.createBasket();
+            user = userRepository.save(user);
+            Basket basket = basketService.createBasketForUser(user);
             user.setBasket(basket);
         }
         return userRepository.save(user);
     }
+
+
+
 
     @Transactional
     public User updateUserDetails(Long telegramId, String name, String phone, String address) {
