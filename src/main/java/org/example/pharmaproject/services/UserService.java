@@ -13,11 +13,14 @@ import java.util.Optional;
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final BasketService basketService;
 
     @Autowired
-    private BasketService basketService;
+    public UserService(UserRepository userRepository, BasketService basketService) {
+        this.userRepository = userRepository;
+        this.basketService = basketService;
+    }
 
     @Transactional(readOnly = true)
     public List<User> findAll() {
@@ -37,15 +40,14 @@ public class UserService {
     @Transactional
     public User save(User user) {
         if (user.getId() == null && user.getTelegramId() != null) {
-            user = userRepository.save(user);
-            Basket basket = basketService.createBasketForUser(user);
-            user.setBasket(basket);
+            // Yangi foydalanuvchi uchun avtomatik savat yaratish
+            User savedUser = userRepository.save(user);
+            Basket basket = basketService.createBasketForUser(savedUser);
+            savedUser.setBasket(basket);
+            return userRepository.save(savedUser);
         }
         return userRepository.save(user);
     }
-
-
-
 
     @Transactional
     public User updateUserDetails(Long telegramId, String name, String phone, String address) {

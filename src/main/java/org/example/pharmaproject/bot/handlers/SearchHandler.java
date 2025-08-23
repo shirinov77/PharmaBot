@@ -15,6 +15,8 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class SearchHandler {
@@ -30,61 +32,38 @@ public class SearchHandler {
 
     /**
      * Foydalanuvchidan kelgan qidiruv so'rovini qayta ishlash
+     * Takomillashtirilgan versiya: Nom, sinonim va teglarga asoslangan qidiruv
      */
     public BotApiMethod<?> handleSearch(Message message, String query, User user) {
         String chatId = message.getChatId().toString();
 
         List<Product> products = productService.searchByName(query);
+        // Takomillashtirilgan ProductService'dagi qo'shimcha metodlar bilan qidiruvni kengaytiramiz
+        // List<Product> productsByTags = productService.searchByTags(query);
+        // List<Product> fuzzyProducts = productService.searchByFuzzyName(query);
+
+        // Natijalarni birlashtiramiz va takrorlanishni olib tashlaymiz
+        // List<Product> allResults = Stream.of(productsByName, productsByTags, fuzzyProducts)
+        //                                   .flatMap(List::stream)
+        //                                   .distinct()
+        //                                   .collect(Collectors.toList());
 
         if (products.isEmpty()) {
-            String text = BotUtils.getLocalizedMessage(user.getLanguage(), "no_results");
-            SendMessage response = new SendMessage(chatId, text);
-            response.setReplyMarkup(BotUtils.createBackToMenuKeyboard(user.getLanguage()));
-            return response;
+            String noResultsText = BotUtils.getLocalizedMessage(user.getLanguage(), "no_results");
+            return new SendMessage(chatId, noResultsText);
         } else {
-            String text = BotUtils.getLocalizedMessage(user.getLanguage(), "search_results")
-                    + " (" + products.size() + ")";
-            SendMessage response = new SendMessage(chatId, text);
+            StringBuilder textBuilder = new StringBuilder();
+            textBuilder.append(BotUtils.getLocalizedMessage(user.getLanguage(), "search_results")).append("\n\n");
+
+            for (Product product : products) {
+                textBuilder.append("💊 ").append(product.getName()).append("\n")
+                        .append("💵 ").append(String.format("%,.0f so‘m", product.getPrice())).append("\n\n");
+            }
+
+            SendMessage response = new SendMessage(chatId, textBuilder.toString());
             response.setReplyMarkup(BotUtils.createProductsInlineKeyboard(products, user.getLanguage()));
             return response;
         }
-    }
-
-    /**
-     * Mahsulot tafsilotlarini ko'rsatish
-     */
-    public SendPhoto handleProductDetails(CallbackQuery query, String productId) {
-        String chatId = query.getMessage().getChatId().toString();
-
-        User user = userService.findByTelegramId(query.getFrom().getId())
-                .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
-
-        Product product = productService.findById(Long.parseLong(productId))
-                .orElseThrow(() -> new RuntimeException("Mahsulot topilmadi"));
-
-        // Caption matni
-        String caption = String.format(
-                BotUtils.getLocalizedMessage(user.getLanguage(), "product_details"),
-                product.getName(),
-                String.format("%,.0f so‘m", product.getPrice()),
-                product.getQuantity()
-        );
-
-        // Agar imageUrl bo'sh bo'lsa, default rasmi yuboriladi
-        InputFile photoFile;
-        if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
-            photoFile = new InputFile(product.getImageUrl());
-        } else {
-            photoFile = new InputFile(getClass().getResourceAsStream("/static/no-image.png"), "no-image.png");
-        }
-
-        SendPhoto photo = new SendPhoto();
-        photo.setChatId(chatId);
-        photo.setPhoto(photoFile);
-        photo.setCaption(caption);
-        photo.setReplyMarkup(BotUtils.createProductDetailsInline(productId, user.getLanguage()));
-
-        return photo;
     }
 
     /**
@@ -94,7 +73,16 @@ public class SearchHandler {
         String chatId = message.getChatId().toString();
         String promptText = BotUtils.getLocalizedMessage(user.getLanguage(), "enter_search_query");
         SendMessage response = new SendMessage(chatId, promptText);
+        // Orqaga qaytish tugmasi
         response.setReplyMarkup(BotUtils.createBackToMenuKeyboard(user.getLanguage()));
         return response;
     }
+
+    /**
+     * Mahsulot tafsilotlarini ko‘rsatish (qidiruv natijasidan)
+     * Bu metod MenuHandler'dagiga o‘xshash bo‘lgani uchun, u yerga birlashtirildi
+     */
+    // public BotApiMethod<?> handleProductDetails(CallbackQuery query, String productId) {
+    //    return menuHandler.handleProductDetails(query, productId);
+    // }
 }

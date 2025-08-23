@@ -2,7 +2,6 @@ package org.example.pharmaproject.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +19,7 @@ public class Basket {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // Savatdagi mahsulotlar ro'yxati
     @ManyToMany
     @JoinTable(
             name = "basket_products",
@@ -33,14 +33,4 @@ public class Basket {
 
     @Column
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

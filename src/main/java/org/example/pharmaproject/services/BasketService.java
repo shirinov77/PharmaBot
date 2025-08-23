@@ -7,8 +7,7 @@ import org.example.pharmaproject.repository.BasketRepository;
 import org.example.pharmaproject.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 public class BasketService {
@@ -22,26 +21,12 @@ public class BasketService {
     }
 
     /**
-     * Yangi bo‘sh savat yaratish (user bilan bog‘lanmagan)
-     */
-    @Transactional
-    public Basket createBasket() {
-        Basket basket = new Basket();
-        basket.setProducts(new ArrayList<>());
-        return basketRepository.save(basket);
-    }
-
-    /**
-     * User uchun yangi basket yaratish va bog‘lash
+     * User uchun yangi savat yaratish va bog‘lash
      */
     @Transactional
     public Basket createBasketForUser(User user) {
         Basket basket = new Basket();
-        basket.setProducts(new ArrayList<>());
-
         basket.setUser(user);
-        user.setBasket(basket);
-
         return basketRepository.save(basket);
     }
 
@@ -50,53 +35,78 @@ public class BasketService {
      */
     @Transactional
     public Basket getBasketByUser(User user) {
-        return user.getBasket() != null
-                ? basketRepository.findById(user.getBasket().getId())
-                .orElseThrow(() -> new IllegalStateException("Savat topilmadi: " + user.getId()))
-                : createBasketForUser(user);
+        return Optional.ofNullable(user.getBasket())
+                .orElseGet(() -> createBasketForUser(user));
     }
 
     /**
-     * Savatga mahsulot qo‘shish
+     * Mahsulotni savatga qo'shish
      */
     @Transactional
-    public Product addToBasket(User user, Long productId) {
+    public void addProductToBasket(User user, Product product) {
         Basket basket = getBasketByUser(user);
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Mahsulot topilmadi: " + productId));
 
-        if (product.getQuantity() <= 0) {
-            throw new IllegalStateException("Mahsulot omborda mavjud emas: " + product.getName());
-        }
+        Optional<Product> existingProductInBasket = basket.getProducts().stream()
+                .filter(p -> p.getId().equals(product.getId()))
+                .findFirst();
 
-        if (!basket.getProducts().contains(product)) {
+        if (existingProductInBasket.isPresent()) {
+            // Agar mahsulot savatda bor bo'lsa, miqdorini oshirish
+            Product p = existingProductInBasket.get();
+            p.setQuantityInBasket(p.getQuantityInBasket() + 1);
+        } else {
+            // Aks holda, yangi mahsulotni qo'shish
+            product.setQuantityInBasket(1);
             basket.getProducts().add(product);
-            basketRepository.save(basket);
         }
 
-        // Mahsulot miqdorini kamaytirish
-        product.setQuantity(product.getQuantity() - 1);
-        productRepository.save(product);
-
-        return product;
+        basketRepository.save(basket);
     }
 
     /**
-     * Savatdan mahsulotni o‘chirish
+     * Savatdagi mahsulot miqdorini oshirish
      */
     @Transactional
-    public void removeFromBasket(User user, Long productId) {
+    public void increaseProductQuantity(User user, Long productId) {
         Basket basket = getBasketByUser(user);
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Mahsulot topilmadi: " + productId));
+        Product productInBasket = basket.getProducts().stream()
+                .filter(p -> p.getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Mahsulot savatda topilmadi"));
 
-        if (basket.getProducts().remove(product)) {
+        productInBasket.setQuantityInBasket(productInBasket.getQuantityInBasket() + 1);
+        basketRepository.save(basket);
+    }
+
+    /**
+     * Savatdagi mahsulot miqdorini kamaytirish
+     */
+    @Transactional
+    public void decreaseProductQuantity(User user, Long productId) {
+        Basket basket = getBasketByUser(user);
+        Product productInBasket = basket.getProducts().stream()
+                .filter(p -> p.getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Mahsulot savatda topilmadi"));
+
+        int currentQuantity = productInBasket.getQuantityInBasket();
+        if (currentQuantity > 1) {
+            productInBasket.setQuantityInBasket(currentQuantity - 1);
             basketRepository.save(basket);
-
-            // Mahsulot miqdorini qaytarish
-            product.setQuantity(product.getQuantity() + 1);
-            productRepository.save(product);
+        } else {
+            // Agar miqdor 1 bo'lsa, mahsulotni savatdan o'chirish
+            removeProductFromBasket(user, productId);
         }
+    }
+
+    /**
+     * Mahsulotni savatdan o‘chirish
+     */
+    @Transactional
+    public void removeProductFromBasket(User user, Long productId) {
+        Basket basket = getBasketByUser(user);
+        basket.getProducts().removeIf(product -> product.getId().equals(productId));
+        basketRepository.save(basket);
     }
 
     /**
@@ -105,13 +115,6 @@ public class BasketService {
     @Transactional
     public void clearBasket(User user) {
         Basket basket = getBasketByUser(user);
-
-        // Copy list qilib olish kerak, bo‘lmasa ConcurrentModificationException bo‘ladi
-        new ArrayList<>(basket.getProducts()).forEach(product -> {
-            product.setQuantity(product.getQuantity() + 1);
-            productRepository.save(product);
-        });
-
         basket.getProducts().clear();
         basketRepository.save(basket);
     }
@@ -121,9 +124,7 @@ public class BasketService {
      */
     @Transactional
     public void deleteBasket(Long basketId) {
-        Basket basket = basketRepository.findById(basketId)
-                .orElseThrow(() -> new IllegalArgumentException("Savat topilmadi: " + basketId));
-        basketRepository.delete(basket);
+        basketRepository.deleteById(basketId);
     }
 
     /**
@@ -132,7 +133,7 @@ public class BasketService {
     @Transactional(readOnly = true)
     public double calculateTotal(Basket basket) {
         return basket.getProducts().stream()
-                .mapToDouble(Product::getPrice)
+                .mapToDouble(p -> p.getPrice() * p.getQuantityInBasket())
                 .sum();
     }
 }

@@ -17,7 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,6 +63,7 @@ public class PharmacyBot extends TelegramLongPollingBot {
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "❌ Xato onUpdateReceived ichida: " + e.getMessage(), e);
+            // executeResponse(new SendMessage(update.getMessage().getChatId().toString(), "❌ Kutilmagan xatolik yuz berdi."));
         }
     }
 
@@ -72,23 +72,29 @@ public class PharmacyBot extends TelegramLongPollingBot {
         String text = message.hasText() ? message.getText().trim() : "";
 
         User user = userService.findByTelegramId(message.getFrom().getId())
-                .orElseGet(() -> createNewUser(message));
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setTelegramId(message.getFrom().getId());
+                    newUser.setName(message.getFrom().getFirstName());
+                    newUser.setLanguage(null);
+                    newUser.setState(null);
+                    return userService.save(newUser);
+                });
 
-        Object response;
-
+        BotApiMethod<?> response;
         try {
             if ("AWAITING_ADDRESS".equals(user.getState())) {
-                response = handleAddressInput(message, user, text);
+                response = orderHandler.handleFinalizeOrder(message, user);
             } else {
-                // Tugmalar matnlarini tilga qarab olish
                 String menuText = BotUtils.getLocalizedMessage(user.getLanguage(), "menu");
                 String searchText = BotUtils.getLocalizedMessage(user.getLanguage(), "search");
                 String basketText = BotUtils.getLocalizedMessage(user.getLanguage(), "basket");
                 String ordersText = BotUtils.getLocalizedMessage(user.getLanguage(), "orders");
                 String changeLangText = BotUtils.getLocalizedMessage(user.getLanguage(), "change_language");
-                String changeAddressText = BotUtils.getLocalizedMessage(user.getLanguage(), "change_address");
 
-                if (text.equalsIgnoreCase(menuText)) {
+                if (text.equalsIgnoreCase("/start")) {
+                    response = startHandler.handleStart(message);
+                } else if (text.equalsIgnoreCase(menuText)) {
                     response = menuHandler.handleMenu(message, user);
                 } else if (text.equalsIgnoreCase(searchText)) {
                     response = searchHandler.handleSearchPrompt(message, user);
@@ -98,50 +104,19 @@ public class PharmacyBot extends TelegramLongPollingBot {
                     response = orderHandler.handleOrders(message, user);
                 } else if (text.equalsIgnoreCase(changeLangText)) {
                     response = startHandler.handleLanguageSelection(message, user);
-                } else if (text.equalsIgnoreCase(changeAddressText)) {
-                    user.setState("AWAITING_ADDRESS");
-                    userService.save(user);
-                    response = new SendMessage(chatId,
-                            BotUtils.getLocalizedMessage(user.getLanguage(), "enter_address"));
                 } else if (text.startsWith("Qidir: ") || text.startsWith("🔎 Поиск: ") || text.startsWith("🔍 Search: ")) {
                     String query = text.substring(text.indexOf(":") + 1).trim();
                     response = searchHandler.handleSearch(message, query, user);
-                } else if (text.equals("/start")) {
-                    response = startHandler.handleStart(message, user);
                 } else {
                     response = new SendMessage(chatId,
                             BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "❌ Message handle qilishda xato: " + e.getMessage(), e);
-            response = new SendMessage(chatId, "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko‘ring.");
+            LOGGER.log(Level.WARNING, "❌ Xabar ishlashda xato: " + e.getMessage(), e);
+            response = new SendMessage(chatId, "❌ Kutilmagan xatolik yuz berdi. Iltimos, qaytadan urinib ko‘ring.");
         }
-
         executeResponse(response);
-    }
-
-    private User createNewUser(Message message) {
-        User newUser = new User();
-        newUser.setTelegramId(message.getFrom().getId());
-        newUser.setName(Optional.ofNullable(message.getFrom().getFirstName()).orElse("Foydalanuvchi"));
-        newUser.setLanguage("uz");
-        newUser.setState(null);
-        LOGGER.info("✅ Yangi foydalanuvchi qo‘shildi: " + newUser.getName());
-        return userService.save(newUser);
-    }
-
-    private BotApiMethod<?> handleAddressInput(Message message, User user, String address) {
-        String chatId = message.getChatId().toString();
-
-        userService.updateUserDetails(user.getTelegramId(), null, null, address);
-        user.setState(null);
-        userService.save(user);
-
-        SendMessage response = new SendMessage(chatId,
-                BotUtils.getLocalizedMessage(user.getLanguage(), "address_updated"));
-        response.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
-        return response;
     }
 
     private void handleCallbackQuery(CallbackQuery query) {
@@ -149,42 +124,48 @@ public class PharmacyBot extends TelegramLongPollingBot {
         String data = query.getData();
         int messageId = query.getMessage().getMessageId();
 
-        User user = userService.findByTelegramId(query.getFrom().getId()).orElse(null);
-        Object response;
+        User user = userService.findByTelegramId(query.getFrom().getId())
+                .orElseThrow(() -> new IllegalStateException("Foydalanuvchi topilmadi!"));
 
+        BotApiMethod<?> response;
         try {
-            if (user == null) throw new IllegalStateException("Foydalanuvchi topilmadi!");
-
             if (data.startsWith("category_")) {
-                String categoryId = data.substring(9);
+                String categoryId = data.substring("category_".length());
                 response = menuHandler.handleCategorySelection(query, categoryId);
             } else if (data.startsWith("product_")) {
-                String productId = data.substring(8, data.lastIndexOf("_"));
-                response = data.endsWith("_add")
-                        ? basketHandler.handleAddToBasket(query, productId)
-                        : searchHandler.handleProductDetails(query, productId);
+                String productId = data.substring("product_".length());
+                response = menuHandler.handleProductDetails(query, productId);
+            } else if (data.startsWith("addtobasket_")) {
+                String productId = data.substring("addtobasket_".length());
+                response = basketHandler.handleAddToBasket(query, productId);
             } else if (data.startsWith("basket_")) {
-                if (data.equals("basket_clear")) {
-                    response = basketHandler.handleClearBasket(query);
-                } else if (data.equals("basket_checkout")) {
-                    response = orderHandler.handleCheckout(query);
-                } else if (data.startsWith("basket_remove_")) {
-                    String productId = data.substring(13);
-                    response = basketHandler.handleRemoveFromBasket(query, productId);
-                } else {
-                    response = defaultCallbackResponse(chatId, messageId, user);
+                String[] parts = data.split("_");
+                String action = parts[1];
+                switch (action) {
+                    case "increase":
+                        response = basketHandler.handleIncreaseProductCount(query, parts[2]);
+                        break;
+                    case "decrease":
+                        response = basketHandler.handleDecreaseProductCount(query, parts[2]);
+                        break;
+                    case "remove":
+                        response = basketHandler.handleRemoveFromBasket(query, parts[2]);
+                        break;
+                    case "clear":
+                        response = basketHandler.handleClearBasket(query);
+                        break;
+                    case "checkout":
+                        response = orderHandler.handleCheckout(query, user);
+                        break;
+                    default:
+                        response = defaultCallbackResponse(chatId, messageId, user);
                 }
             } else if (data.startsWith("order_")) {
-                String orderId = data.substring(6, data.lastIndexOf("_"));
-                if (data.endsWith("_confirm")) {
-                    response = orderHandler.handleConfirmOrder(query, orderId);
-                } else if (data.endsWith("_cancel")) {
-                    response = orderHandler.handleCancelOrder(query, orderId);
-                } else {
-                    response = defaultCallbackResponse(chatId, messageId, user);
-                }
+                String orderId = data.substring("order_".length());
+                String status = data.substring(data.lastIndexOf("_") + 1);
+                response = orderHandler.updateStatus(query, Long.parseLong(orderId), status);
             } else if (data.startsWith("lang_")) {
-                String lang = data.substring(5);
+                String lang = data.substring("lang_".length());
                 response = startHandler.handleLanguageChange(query, lang);
             } else {
                 response = defaultCallbackResponse(chatId, messageId, user);
@@ -194,9 +175,9 @@ public class PharmacyBot extends TelegramLongPollingBot {
             LOGGER.log(Level.WARNING, "❌ Callback ishlashda xato: " + e.getMessage(), e);
             response = defaultCallbackResponse(chatId, messageId, user);
         }
-
         executeResponse(response);
     }
+
 
     private EditMessageText defaultCallbackResponse(String chatId, int messageId, User user) {
         String lang = user != null ? user.getLanguage() : "uz";
@@ -207,18 +188,10 @@ public class PharmacyBot extends TelegramLongPollingBot {
         return editMessage;
     }
 
-    private void executeResponse(Object response) {
+    private void executeResponse(BotApiMethod<?> response) {
         if (response == null) return;
         try {
-            if (response instanceof SendMessage sendMessage) {
-                execute(sendMessage);
-            } else if (response instanceof SendPhoto sendPhoto) {
-                execute(sendPhoto);
-            } else if (response instanceof EditMessageText editMessageText) {
-                execute(editMessageText);
-            } else if (response instanceof BotApiMethod<?> botApiMethod) {
-                execute(botApiMethod);
-            }
+            execute(response);
         } catch (TelegramApiException e) {
             LOGGER.log(Level.SEVERE, "❌ Telegram API xatosi: " + e.getMessage(), e);
         }

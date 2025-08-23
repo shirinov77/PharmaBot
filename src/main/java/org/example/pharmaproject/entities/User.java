@@ -34,20 +34,30 @@ public class User {
     @Column(length = 2, nullable = false)
     private String language = "uz";
 
-    @Column
+    // Botning hozirgi holatini saqlaydi, masalan "SEARCHING"
     private String state;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column
+    private LocalDateTime updatedAt;
+
+    // Bitta foydalanuvchida bir nechta buyurtma bo‘lishi mumkin
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
 
+    // Bitta foydalanuvchida faqat bitta savat bo‘lishi mumkin
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Basket basket;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

@@ -23,6 +23,7 @@ public class Category {
     @Column(unique = true)
     private String name;
 
+    // Bitta kategoriyada ko‘plab mahsulotlar bo‘lishi mumkin
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Product> products = new ArrayList<>();
 
