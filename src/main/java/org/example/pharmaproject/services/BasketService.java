@@ -7,6 +7,8 @@ import org.example.pharmaproject.repository.BasketRepository;
 import org.example.pharmaproject.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
 import java.util.Optional;
 
 @Service
@@ -27,6 +29,8 @@ public class BasketService {
     public Basket createBasketForUser(User user) {
         Basket basket = new Basket();
         basket.setUser(user);
+        // Yangi savat yaratishda productslarni bo'sh ArrayList bilan boshlash muhim
+        basket.setProducts(new ArrayList<>());
         return basketRepository.save(basket);
     }
 
@@ -40,10 +44,11 @@ public class BasketService {
     }
 
     /**
-     * Mahsulotni savatga qo'shish
+     * Mahsulotni savatga qo‘shish yoki miqdorini oshirish.
+     * Bu metod mahsulotni birinchi marta savatga qo'shish yoki mavjud bo'lsa, uning miqdorini 1 taga oshirish uchun ishlatiladi.
      */
     @Transactional
-    public void addProductToBasket(User user, Product product) {
+    public void addOrIncreaseProductInBasket(User user, Product product) {
         Basket basket = getBasketByUser(user);
 
         Optional<Product> existingProductInBasket = basket.getProducts().stream()
@@ -67,7 +72,7 @@ public class BasketService {
      * Savatdagi mahsulot miqdorini oshirish
      */
     @Transactional
-    public void increaseProductQuantity(User user, Long productId) {
+    public void increaseProductQuantityInBasket(User user, Long productId) {
         Basket basket = getBasketByUser(user);
         Product productInBasket = basket.getProducts().stream()
                 .filter(p -> p.getId().equals(productId))
@@ -79,10 +84,11 @@ public class BasketService {
     }
 
     /**
-     * Savatdagi mahsulot miqdorini kamaytirish
+     * Savatdagi mahsulot miqdorini kamaytirish.
+     * Agar miqdor 1 ga teng bo‘lsa, mahsulot butunlay o‘chiriladi.
      */
     @Transactional
-    public void decreaseProductQuantity(User user, Long productId) {
+    public void decreaseProductQuantityInBasket(User user, Long productId) {
         Basket basket = getBasketByUser(user);
         Product productInBasket = basket.getProducts().stream()
                 .filter(p -> p.getId().equals(productId))
@@ -100,7 +106,7 @@ public class BasketService {
     }
 
     /**
-     * Mahsulotni savatdan o‘chirish
+     * Mahsulotni savatdan butunlay o‘chirish
      */
     @Transactional
     public void removeProductFromBasket(User user, Long productId) {

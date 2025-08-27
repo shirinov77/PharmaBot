@@ -23,9 +23,9 @@ public class StartHandler {
     }
 
     /**
-     * Foydalanuvchi /start komandasini yuborganda ishga tushadi.
-     * Yangi foydalanuvchini aniqlaydi va til tanlash menyusini yuboradi.
-     * Mavjud foydalanuvchiga esa to'g'ridan-to'g'ri asosiy menyuni ko'rsatadi.
+     * /start komanda ishlaganda
+     * - Yangi foydalanuvchi → til tanlash
+     * - Mavjud foydalanuvchi → asosiy menyu
      */
     public BotApiMethod<?> handleStart(Message message) {
         String chatId = message.getChatId().toString();
@@ -33,12 +33,11 @@ public class StartHandler {
 
         Optional<User> optionalUser = userService.findByTelegramId(telegramId);
 
-        // Agar foydalanuvchi ma'lumotlar bazasida mavjud bo'lmasa, uni yangi foydalanuvchi sifatida saqlaymiz va til tanlash menyusini yuboramiz
         if (optionalUser.isEmpty()) {
             User newUser = new User();
             newUser.setTelegramId(telegramId);
             newUser.setName(message.getFrom().getFirstName() != null ? message.getFrom().getFirstName() : "Foydalanuvchi");
-            newUser.setLanguage(null); // Til tanlanmagan
+            newUser.setLanguage(null); // til tanlanmagan
             userService.save(newUser);
 
             SendMessage response = new SendMessage(chatId,
@@ -47,7 +46,6 @@ public class StartHandler {
             return response;
         }
 
-        // Aks holda → asosiy menyu
         User user = optionalUser.get();
         SendMessage response = new SendMessage(chatId,
                 BotUtils.getLocalizedMessage(user.getLanguage(), "welcome_message"));
@@ -56,8 +54,7 @@ public class StartHandler {
     }
 
     /**
-     * Foydalanuvchi Tilni o'zgartirish tugmasini bosganda yoki /language komandasini yuborganda ishga tushadi.
-     * Til tanlash uchun inline menyu yuboradi.
+     * Til tanlash komandasini yuborish yoki /language komanda
      */
     public BotApiMethod<?> handleLanguageSelection(Message message, User user) {
         String chatId = message.getChatId().toString();
@@ -67,8 +64,8 @@ public class StartHandler {
     }
 
     /**
-     * Foydalanuvchi tilni inline menyudan tanlaganda ishga tushadi (callback orqali).
-     * Foydalanuvchining tilini ma'lumotlar bazasida yangilaydi va asosiy menyuni yuboradi.
+     * Foydalanuvchi tilni tanlaganda (callback)
+     * Tilni yangilaydi va asosiy menyuni yuboradi
      */
     public BotApiMethod<?> handleLanguageChange(CallbackQuery query, String lang) {
         String chatId = query.getMessage().getChatId().toString();
@@ -79,7 +76,6 @@ public class StartHandler {
         user.setLanguage(lang);
         userService.save(user);
 
-        // Til muvaffaqiyatli o'zgartirilgach, asosiy menyuga o'tish
         String successMessage = BotUtils.getLocalizedMessage(lang, "language_changed");
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);

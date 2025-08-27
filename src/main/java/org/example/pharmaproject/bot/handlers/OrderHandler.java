@@ -13,7 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -32,9 +31,7 @@ public class OrderHandler {
         this.basketService = basketService;
     }
 
-    /**
-     * Foydalanuvchining buyurtmalar ro‘yxatini ko‘rsatish
-     */
+    /** Foydalanuvchining buyurtmalar ro‘yxatini ko‘rsatish */
     public BotApiMethod<?> handleOrders(Message message, User user) {
         String chatId = message.getChatId().toString();
 
@@ -49,9 +46,7 @@ public class OrderHandler {
         return response;
     }
 
-    /**
-     * Buyurtma berish jarayonini boshlash
-     */
+    /** Buyurtma berish jarayonini boshlash */
     public BotApiMethod<?> handleCheckout(CallbackQuery query, User user) {
         String chatId = query.getMessage().getChatId().toString();
         Basket basket = basketService.getBasketByUser(user);
@@ -69,14 +64,12 @@ public class OrderHandler {
         }
     }
 
-    /**
-     * Foydalanuvchi manzilini kiritgandan so‘ng buyurtmani yakunlash
-     */
+    /** Foydalanuvchi manzilini kiritgandan so‘ng buyurtmani yakunlash */
     public BotApiMethod<?> handleFinalizeOrder(Message message, User user) {
         String chatId = message.getChatId().toString();
         String address = message.getText().trim();
 
-        if (user.getState() != null && user.getState().equals("AWAITING_ADDRESS")) {
+        if ("AWAITING_ADDRESS".equals(user.getState())) {
             userService.updateUserDetails(user.getTelegramId(), null, null, address);
             user.setState(null);
             userService.save(user);
@@ -99,9 +92,7 @@ public class OrderHandler {
         }
     }
 
-    /**
-     * Buyurtma statusini o‘zgartirish (Tasdiqlash yoki bekor qilish)
-     */
+    /** Buyurtma statusini o‘zgartirish */
     public BotApiMethod<?> updateStatus(CallbackQuery query, Long orderId, String status) {
         String chatId = query.getMessage().getChatId().toString();
         User user = userService.findByTelegramId(query.getFrom().getId()).orElseThrow();
@@ -120,9 +111,7 @@ public class OrderHandler {
         return new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "invalid_callback"));
     }
 
-    /**
-     * Buyurtmalar haqida umumiy ma'lumot matnini yaratish
-     */
+    /** Buyurtmalar haqida umumiy ma'lumot matnini yaratish */
     private String getOrdersSummary(List<Order> orders, String lang) {
         StringBuilder summary = new StringBuilder(BotUtils.getLocalizedMessage(lang, "orders_summary"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");

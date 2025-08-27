@@ -9,14 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 public class SearchHandler {
@@ -31,22 +26,13 @@ public class SearchHandler {
     }
 
     /**
-     * Foydalanuvchidan kelgan qidiruv so'rovini qayta ishlash
-     * Takomillashtirilgan versiya: Nom, sinonim va teglarga asoslangan qidiruv
+     * Foydalanuvchidan qidiruv so'rovini oladi va natijalarni qaytaradi
      */
     public BotApiMethod<?> handleSearch(Message message, String query, User user) {
         String chatId = message.getChatId().toString();
 
+        // Mahsulotlarni nom bo‘yicha qidirish
         List<Product> products = productService.searchByName(query);
-        // Takomillashtirilgan ProductService'dagi qo'shimcha metodlar bilan qidiruvni kengaytiramiz
-        // List<Product> productsByTags = productService.searchByTags(query);
-        // List<Product> fuzzyProducts = productService.searchByFuzzyName(query);
-
-        // Natijalarni birlashtiramiz va takrorlanishni olib tashlaymiz
-        // List<Product> allResults = Stream.of(productsByName, productsByTags, fuzzyProducts)
-        //                                   .flatMap(List::stream)
-        //                                   .distinct()
-        //                                   .collect(Collectors.toList());
 
         if (products.isEmpty()) {
             String noResultsText = BotUtils.getLocalizedMessage(user.getLanguage(), "no_results");
@@ -61,28 +47,22 @@ public class SearchHandler {
             }
 
             SendMessage response = new SendMessage(chatId, textBuilder.toString());
+            // Inline tugmalar yordamida har bir mahsulotni tanlash mumkin bo‘ladi
             response.setReplyMarkup(BotUtils.createProductsInlineKeyboard(products, user.getLanguage()));
             return response;
         }
     }
 
     /**
-     * Foydalanuvchiga qidiruv uchun prompt yuborish
+     * Foydalanuvchiga qidiruv promptini yuboradi
      */
     public SendMessage handleSearchPrompt(Message message, User user) {
         String chatId = message.getChatId().toString();
         String promptText = BotUtils.getLocalizedMessage(user.getLanguage(), "enter_search_query");
         SendMessage response = new SendMessage(chatId, promptText);
-        // Orqaga qaytish tugmasi
+        // Orqaga qaytish tugmasi qo‘shiladi
         response.setReplyMarkup(BotUtils.createBackToMenuKeyboard(user.getLanguage()));
         return response;
     }
 
-    /**
-     * Mahsulot tafsilotlarini ko‘rsatish (qidiruv natijasidan)
-     * Bu metod MenuHandler'dagiga o‘xshash bo‘lgani uchun, u yerga birlashtirildi
-     */
-    // public BotApiMethod<?> handleProductDetails(CallbackQuery query, String productId) {
-    //    return menuHandler.handleProductDetails(query, productId);
-    // }
 }
