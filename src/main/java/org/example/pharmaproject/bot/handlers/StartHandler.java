@@ -36,12 +36,14 @@ public class StartHandler {
         if (optionalUser.isEmpty()) {
             User newUser = new User();
             newUser.setTelegramId(telegramId);
-            newUser.setName(message.getFrom().getFirstName() != null ? message.getFrom().getFirstName() : "Foydalanuvchi");
+            newUser.setName(message.getFrom().getFirstName() != null
+                    ? message.getFrom().getFirstName()
+                    : "Foydalanuvchi");
             newUser.setLanguage(null); // til tanlanmagan
             userService.save(newUser);
 
             SendMessage response = new SendMessage(chatId,
-                    BotUtils.getLocalizedMessage("uz", "select_language"));
+                    BotUtils.getLocalizedMessage("uz", "select_language")); // default matn uz
             response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
             return response;
         }
@@ -58,7 +60,8 @@ public class StartHandler {
      */
     public BotApiMethod<?> handleLanguageSelection(Message message, User user) {
         String chatId = message.getChatId().toString();
-        SendMessage response = new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "select_language"));
+        SendMessage response = new SendMessage(chatId,
+                BotUtils.getLocalizedMessage(user.getLanguage(), "select_language"));
         response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
         return response;
     }
@@ -67,11 +70,14 @@ public class StartHandler {
      * Foydalanuvchi tilni tanlaganda (callback)
      * Tilni yangilaydi va asosiy menyuni yuboradi
      */
-    public BotApiMethod<?> handleLanguageChange(CallbackQuery query, String lang) {
+    public BotApiMethod<?> handleLanguageChange(CallbackQuery query, String callbackData) {
         String chatId = query.getMessage().getChatId().toString();
 
         User user = userService.findByTelegramId(query.getFrom().getId())
                 .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
+
+        // callbackData "lang_uz", "lang_ru", "lang_en"
+        String lang = callbackData.replace("lang_", "");
 
         user.setLanguage(lang);
         userService.save(user);

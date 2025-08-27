@@ -64,5 +64,4 @@ public class SearchHandler {
         response.setReplyMarkup(BotUtils.createBackToMenuKeyboard(user.getLanguage()));
         return response;
     }
-
 }

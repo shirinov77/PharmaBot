@@ -15,16 +15,15 @@ import java.util.stream.Collectors;
 
 public class BotUtils {
 
-    /* ======================= INLINE KEYBOARDLAR ======================= */
 
     /** 🌐 Til tanlash keyboard */
     public static InlineKeyboardMarkup createLanguageInlineKeyboard() {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         rows.add(List.of(
-                createButton("🇺🇿 O‘zbekcha", "LANG_UZ"),
-                createButton("🇷🇺 Русский", "LANG_RU"),
-                createButton("🇬🇧 English", "LANG_EN")
+                createButton("🇺🇿 O‘zbekcha", "lang_uz"),
+                createButton("🇷🇺 Русский", "lang_ru"),
+                createButton("🇬🇧 English", "lang_en")
         ));
 
         return new InlineKeyboardMarkup(rows);
@@ -171,7 +170,7 @@ public class BotUtils {
 
         Map<String, Map<String, String>> messages = new HashMap<>();
 
-        /* O‘zbekcha */
+        // O‘zbekcha
         Map<String, String> uz = new HashMap<>();
         uz.put("welcome_message", "Assalomu alaykum! Botimizga xush kelibsiz. 😊");
         uz.put("language_changed", "✅ Til muvaffaqiyatli o‘zgartirildi!");
@@ -186,9 +185,26 @@ public class BotUtils {
         uz.put("add_to_basket", "🛒 Savatga qo'shish");
         uz.put("clear_basket", "Savatni tozalash");
         uz.put("checkout", "Buyurtma berish");
+        uz.put("unknown_command", "Kechirasiz, bu buyruq tushunarsiz.");
+        uz.put("n_orders", "Sizning buyurtmalaringiz mavjud emas.");
+        uz.put("menu_message", "Kategoriyalar ro‘yxati:");
+        uz.put("empty_basket", "Savat bo‘sh.");
+        uz.put("enter_search_query", "Iltimos, qidiruv so‘rovini kiriting:");
+        uz.put("no_results", "Hech qanday natija topilmadi.");
+        uz.put("search_results", "Qidiruv natijalari:");
+        uz.put("order_created", "Buyurtma #%d muvaffaqiyatli yaratildi!\nManzil: %s");
+        uz.put("order_confirmed", "Buyurtma tasdiqlandi.");
+        uz.put("order_cancelled", "Buyurtma bekor qilindi.");
+        uz.put("invalid_callback", "Noto‘g‘ri amal qilindi.");
+        uz.put("orders_summary", "Sizning buyurtmalaringiz:");
+        uz.put("order_status_pending", "Kutilmoqda");
+        uz.put("order_status_confirmed", "Tasdiqlangan");
+        uz.put("order_status_cancelled", "Bekor qilingan");
+        uz.put("product_added_to_basket", "Mahsulot savatga qo‘shirildi.");
+        uz.put("basket_cleared", "Savat tozalandi.");
         messages.put("uz", uz);
 
-        /* Русский */
+        // Русский
         Map<String, String> ru = new HashMap<>();
         ru.put("welcome_message", "Здравствуйте! Добро пожаловать в наш бот. 😊");
         ru.put("language_changed", "✅ Язык успешно изменен!");
@@ -203,9 +219,26 @@ public class BotUtils {
         ru.put("add_to_basket", "🛒 Добавить в корзину");
         ru.put("clear_basket", "Очистить корзину");
         ru.put("checkout", "Оформить заказ");
+        ru.put("unknown_command", "Извините, эта команда непонятна.");
+        ru.put("n_orders", "У вас нет заказов.");
+        ru.put("menu_message", "Список категорий:");
+        ru.put("empty_basket", "Корзина пуста.");
+        ru.put("enter_search_query", "Пожалуйста, введите запрос для поиска:");
+        ru.put("no_results", "Результатов не найдено.");
+        ru.put("search_results", "Результаты поиска:");
+        ru.put("order_created", "Заказ #%d успешно создан!\nАдрес: %s");
+        ru.put("order_confirmed", "Заказ подтверждён.");
+        ru.put("order_cancelled", "Заказ отменён.");
+        ru.put("invalid_callback", "Некорректное действие.");
+        ru.put("orders_summary", "Ваши заказы:");
+        ru.put("order_status_pending", "Ожидает");
+        ru.put("order_status_confirmed", "Подтверждён");
+        ru.put("order_status_cancelled", "Отменён");
+        ru.put("product_added_to_basket", "Продукт добавлен в корзину.");
+        ru.put("basket_cleared", "Корзина очищена.");
         messages.put("ru", ru);
 
-        /* English */
+        // English
         Map<String, String> en = new HashMap<>();
         en.put("welcome_message", "Hello! Welcome to our bot. 😊");
         en.put("language_changed", "✅ Language successfully changed!");
@@ -220,9 +253,26 @@ public class BotUtils {
         en.put("add_to_basket", "🛒 Add to basket");
         en.put("clear_basket", "Clear basket");
         en.put("checkout", "Checkout");
+        en.put("unknown_command", "Sorry, this command is not recognized.");
+        en.put("n_orders", "You have no orders.");
+        en.put("menu_message", "Category list:");
+        en.put("empty_basket", "Your basket is empty.");
+        en.put("enter_search_query", "Please enter your search query:");
+        en.put("no_results", "No results found.");
+        en.put("search_results", "Search results:");
+        en.put("order_created", "Order #%d created successfully!\nAddress: %s");
+        en.put("order_confirmed", "Order confirmed.");
+        en.put("order_cancelled", "Order cancelled.");
+        en.put("invalid_callback", "Invalid action.");
+        en.put("orders_summary", "Your orders:");
+        en.put("order_status_pending", "Pending");
+        en.put("order_status_confirmed", "Confirmed");
+        en.put("order_status_cancelled", "Cancelled");
+        en.put("product_added_to_basket", "Product added to basket.");
+        en.put("basket_cleared", "Basket cleared.");
         messages.put("en", en);
 
-        return messages.getOrDefault(lang, messages.get("uz"))
+        return messages.getOrDefault(lang.toLowerCase(), messages.get("uz"))
                 .getOrDefault(key, key);
     }
 }

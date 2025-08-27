@@ -16,6 +16,9 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,6 +26,7 @@ import java.util.logging.Logger;
 public class PharmacyBot extends TelegramLongPollingBot {
 
     private static final Logger LOGGER = Logger.getLogger(PharmacyBot.class.getName());
+    private final ExecutorService executor = Executors.newFixedThreadPool(10); // bir vaqtda 10 ta oqim
 
     @Value("${telegrambot.userName}")
     private String botUsername;
@@ -36,6 +40,13 @@ public class PharmacyBot extends TelegramLongPollingBot {
     private final SearchHandler searchHandler;
     private final BasketHandler basketHandler;
     private final OrderHandler orderHandler;
+
+    // tezkor tekshiruv uchun tayyor setlar
+    private static final Set<String> PRODUCT_COMMANDS = Set.of("📁 Mahsulotlar", "📁 Products", "📁 Товары");
+    private static final Set<String> SEARCH_COMMANDS = Set.of("🔎 Qidirish", "🔎 Search", "🔎 Поиск");
+    private static final Set<String> BASKET_COMMANDS = Set.of("🛒 Savat", "🛒 Basket", "🛒 Корзина");
+    private static final Set<String> ORDERS_COMMANDS = Set.of("📜 Buyurtmalarim", "📜 Orders", "📜 Заказы");
+    private static final Set<String> LANGUAGE_COMMANDS = Set.of("🌐 Tilni o‘zgartirish", "🌐 Change Language", "🌐 Сменить язык");
 
     @Autowired
     public PharmacyBot(UserService userService,
@@ -54,15 +65,17 @@ public class PharmacyBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        try {
-            if (update.hasMessage() && update.getMessage().hasText()) {
-                handleMessage(update.getMessage());
-            } else if (update.hasCallbackQuery()) {
-                handleCallbackQuery(update.getCallbackQuery());
+        executor.submit(() -> { // har bir update alohida oqimda
+            try {
+                if (update.hasMessage() && update.getMessage().hasText()) {
+                    handleMessage(update.getMessage());
+                } else if (update.hasCallbackQuery()) {
+                    handleCallbackQuery(update.getCallbackQuery());
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "❌ Xato onUpdateReceived ichida: " + e.getMessage(), e);
             }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "❌ Xato onUpdateReceived ichida: " + e.getMessage(), e);
-        }
+        });
     }
 
     private void handleMessage(Message message) {
@@ -75,58 +88,34 @@ public class PharmacyBot extends TelegramLongPollingBot {
                     newUser.setTelegramId(message.getFrom().getId());
                     newUser.setName(message.getFrom().getFirstName());
                     newUser.setLanguage("uz");
-                    newUser.setState(null);
                     return userService.save(newUser);
                 });
 
         BotApiMethod<?> response;
-
         try {
             if ("AWAITING_ADDRESS".equals(user.getState())) {
                 response = orderHandler.handleFinalizeOrder(message, user);
+            } else if ("/start".equals(text)) {
+                response = startHandler.handleStart(message);
+            } else if (PRODUCT_COMMANDS.contains(text)) {
+                response = menuHandler.handleMenu(message, user);
+            } else if (SEARCH_COMMANDS.contains(text)) {
+                response = searchHandler.handleSearchPrompt(message, user);
+            } else if (BASKET_COMMANDS.contains(text)) {
+                response = basketHandler.handleBasket(message, user);
+            } else if (ORDERS_COMMANDS.contains(text)) {
+                response = orderHandler.handleOrders(message, user);
+            } else if (LANGUAGE_COMMANDS.contains(text)) {
+                response = startHandler.handleLanguageSelection(message, user);
+            } else if (text.startsWith("Qidir: ") || text.startsWith("🔎 Поиск: ") || text.startsWith("🔍 Search: ")) {
+                String query = text.substring(text.indexOf(":") + 1).trim();
+                response = searchHandler.handleSearch(message, query, user);
             } else {
-                switch (text) {
-                    case "/start":
-                        response = startHandler.handleStart(message);
-                        break;
-                    case "📁 Mahsulotlar":
-                    case "📁 Products":
-                    case "📁 Товары":
-                        response = menuHandler.handleMenu(message, user);
-                        break;
-                    case "🔎 Qidirish":
-                    case "🔎 Search":
-                    case "🔎 Поиск":
-                        response = searchHandler.handleSearchPrompt(message, user);
-                        break;
-                    case "🛒 Savat":
-                    case "🛒 Basket":
-                    case "🛒 Корзина":
-                        response = basketHandler.handleBasket(message, user);
-                        break;
-                    case "📜 Buyurtmalarim":
-                    case "📜 Orders":
-                    case "📜 Заказы":
-                        response = orderHandler.handleOrders(message, user);
-                        break;
-                    case "🌐 Smenit til":
-                    case "🌐 Change Language":
-                    case "🌐 Сменить язык":
-                        response = startHandler.handleLanguageSelection(message, user);
-                        break;
-                    default:
-                        if (text.startsWith("Qidir: ") || text.startsWith("🔎 Поиск: ") || text.startsWith("🔍 Search: ")) {
-                            String query = text.substring(text.indexOf(":") + 1).trim();
-                            response = searchHandler.handleSearch(message, query, user);
-                        } else {
-                            response = new SendMessage(chatId,
-                                    BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
-                        }
-                }
+                response = new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
             }
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "❌ Xabar ishlashda xato: " + e.getMessage(), e);
-            response = new SendMessage(chatId, "❌ Kutilmagan xatolik yuz berdi. Iltimos, qaytadan urinib ko‘ring.");
+            response = new SendMessage(chatId, "❌ Kutilmagan xatolik yuz berdi. Qaytadan urinib ko‘ring.");
         }
 
         executeResponse(response);
@@ -141,7 +130,6 @@ public class PharmacyBot extends TelegramLongPollingBot {
                 .orElseThrow(() -> new IllegalStateException("Foydalanuvchi topilmadi!"));
 
         BotApiMethod<?> response;
-
         try {
             if (data.startsWith("category_")) {
                 response = menuHandler.handleCategorySelection(query, data.substring(9));
@@ -151,41 +139,27 @@ public class PharmacyBot extends TelegramLongPollingBot {
                 response = basketHandler.handleAddToBasket(query, data.substring(15));
             } else if (data.startsWith("basket_")) {
                 String[] parts = data.split("_");
-                if (parts.length < 2) {
-                    response = defaultCallbackResponse(chatId, messageId, user);
+                if (parts.length >= 3) {
+                    response = switch (parts[1]) {
+                        case "increase" -> basketHandler.handleIncreaseProductCount(query, parts[2]);
+                        case "decrease" -> basketHandler.handleDecreaseProductCount(query, parts[2]);
+                        case "remove" -> basketHandler.handleRemoveFromBasket(query, parts[2]);
+                        default -> defaultCallbackResponse(chatId, messageId, user);
+                    };
+                } else if ("clear".equals(parts[1])) {
+                    response = basketHandler.handleClearBasket(query);
+                } else if ("checkout".equals(parts[1])) {
+                    response = orderHandler.handleCheckout(query, user);
                 } else {
-                    switch (parts[1]) {
-                        case "increase":
-                            response = basketHandler.handleIncreaseProductCount(query, parts[2]);
-                            break;
-                        case "decrease":
-                            response = basketHandler.handleDecreaseProductCount(query, parts[2]);
-                            break;
-                        case "remove":
-                            response = basketHandler.handleRemoveFromBasket(query, parts[2]);
-                            break;
-                        case "clear":
-                            response = basketHandler.handleClearBasket(query);
-                            break;
-                        case "checkout":
-                            response = orderHandler.handleCheckout(query, user);
-                            break;
-                        default:
-                            response = defaultCallbackResponse(chatId, messageId, user);
-                    }
+                    response = defaultCallbackResponse(chatId, messageId, user);
                 }
             } else if (data.startsWith("order_")) {
                 String[] orderParts = data.substring(6).split("_");
-                if(orderParts.length >= 2) {
-                    String orderId = orderParts[0];
-                    String status = orderParts[1];
-                    response = orderHandler.updateStatus(query, Long.parseLong(orderId), status);
-                } else {
-                    response = defaultCallbackResponse(chatId, messageId, user);
-                }
+                response = (orderParts.length >= 2)
+                        ? orderHandler.updateStatus(query, Long.parseLong(orderParts[0]), orderParts[1])
+                        : defaultCallbackResponse(chatId, messageId, user);
             } else if (data.startsWith("lang_")) {
-                String lang = data.substring(5);
-                response = startHandler.handleLanguageChange(query, lang);
+                response = startHandler.handleLanguageChange(query, data.substring(5));
             } else {
                 response = defaultCallbackResponse(chatId, messageId, user);
             }
