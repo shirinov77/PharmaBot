@@ -1,15 +1,16 @@
 package org.example.pharmaproject.bot.handlers;
 
 import org.example.pharmaproject.bot.utils.BotUtils;
+import org.example.pharmaproject.entities.Basket;
 import org.example.pharmaproject.entities.Order;
 import org.example.pharmaproject.entities.User;
+import org.example.pharmaproject.services.BasketService;
 import org.example.pharmaproject.services.OrderService;
 import org.example.pharmaproject.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
@@ -21,115 +22,96 @@ public class OrderHandler {
 
     private final OrderService orderService;
     private final UserService userService;
+    private final BasketService basketService;
 
     @Autowired
-    public OrderHandler(OrderService orderService, UserService userService) {
+    public OrderHandler(OrderService orderService, UserService userService, BasketService basketService) {
         this.orderService = orderService;
         this.userService = userService;
+        this.basketService = basketService;
     }
 
-    /**
-     * Buyurtmalar ro‘yxatini ko‘rsatish
-     */
+    /** Foydalanuvchining buyurtmalar ro‘yxatini ko‘rsatish */
     public BotApiMethod<?> handleOrders(Message message, User user) {
         String chatId = message.getChatId().toString();
 
         List<Order> orders = orderService.findOrdersByUser(user);
 
         String text = orders.isEmpty()
-                ? BotUtils.getLocalizedMessage(user.getLanguage(), "no_orders")
+                ? BotUtils.getLocalizedMessage(user.getLanguage(), "n_orders")
                 : getOrdersSummary(orders, user.getLanguage());
 
-        if (orders.isEmpty()) {
-            SendMessage response = new SendMessage();
-            response.setChatId(chatId);
-            response.setText(text);
-            response.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
-            return response;
-        } else {
-            SendMessage response = new SendMessage();
-            response.setChatId(chatId);
-            response.setText(text);
-            response.setReplyMarkup(BotUtils.createOrdersInlineKeyboard(orders, user.getLanguage()));
-            return response;
-        }
-    }
-
-
-
-    /**
-     * Checkout jarayonini boshlash
-     */
-    public BotApiMethod<?> handleCheckout(CallbackQuery query) {
-        String chatId = query.getMessage().getChatId().toString();
-        int messageId = query.getMessage().getMessageId();
-
-        User user = userService.findByTelegramId(query.getFrom().getId())
-                .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
-
-        Order order = orderService.createOrderFromBasket(user);
-
-        String text = BotUtils.getLocalizedMessage(user.getLanguage(), "order_created") + " #" + order.getId();
-
-        EditMessageText response = new EditMessageText();
-        response.setChatId(chatId);
-        response.setMessageId(messageId);
-        response.setText(text);
-        response.setReplyMarkup(BotUtils.createOrderActionsInline(order.getId(), user.getLanguage()));
-
+        SendMessage response = new SendMessage(chatId, text);
+        response.setReplyMarkup(BotUtils.createOrdersInlineKeyboard(orders, user.getLanguage()));
         return response;
     }
 
-    /**
-     * Buyurtmani tasdiqlash
-     */
-    public List<BotApiMethod<?>> handleConfirmOrder(CallbackQuery query, String orderId) {
+    /** Buyurtma berish jarayonini boshlash */
+    public BotApiMethod<?> handleCheckout(CallbackQuery query, User user) {
         String chatId = query.getMessage().getChatId().toString();
-        int messageId = query.getMessage().getMessageId();
+        Basket basket = basketService.getBasketByUser(user);
 
-        User user = userService.findByTelegramId(query.getFrom().getId())
-                .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
+        if (basket.getProducts().isEmpty()) {
+            return new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "empty_basket"));
+        }
 
-        orderService.updateStatus(Long.parseLong(orderId), "CONFIRMED");
-
-        EditMessageText editMessage = new EditMessageText();
-        editMessage.setChatId(chatId);
-        editMessage.setMessageId(messageId);
-        editMessage.setText(BotUtils.getLocalizedMessage(user.getLanguage(), "order_confirmed"));
-
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(BotUtils.getLocalizedMessage(user.getLanguage(), "back_to_menu"));
-        sendMessage.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
-
-        return List.of(editMessage, sendMessage);
+        if (user.getAddress() == null || user.getAddress().trim().isEmpty()) {
+            user.setState("AWAITING_ADDRESS");
+            userService.save(user);
+            return new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "enter_address"));
+        } else {
+            return handleFinalizeOrder(query.getMessage(), user);
+        }
     }
 
+    /** Foydalanuvchi manzilini kiritgandan so‘ng buyurtmani yakunlash */
+    public BotApiMethod<?> handleFinalizeOrder(Message message, User user) {
+        String chatId = message.getChatId().toString();
+        String address = message.getText().trim();
 
+        if ("AWAITING_ADDRESS".equals(user.getState())) {
+            userService.updateUserDetails(user.getTelegramId(), null, null, address);
+            user.setState(null);
+            userService.save(user);
+        }
 
-    /**
-     * Buyurtmani bekor qilish
-     */
-    public BotApiMethod<?> handleCancelOrder(CallbackQuery query, String orderId) {
-        String chatId = query.getMessage().getChatId().toString();
+        try {
+            Order order = orderService.createOrderFromBasket(user);
+            String successMessage = String.format(
+                    BotUtils.getLocalizedMessage(user.getLanguage(), "order_created"),
+                    order.getId(),
+                    user.getAddress()
+            );
 
-        User user = userService.findByTelegramId(query.getFrom().getId())
-                .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
+            SendMessage response = new SendMessage(chatId, successMessage);
+            response.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
+            return response;
 
-        orderService.updateStatus(Long.parseLong(orderId), "CANCELLED");
-
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(BotUtils.getLocalizedMessage(user.getLanguage(), "order_cancelled"));
-        sendMessage.setReplyMarkup(BotUtils.getMainKeyboard(user.getLanguage()));
-
-        return sendMessage;
+        } catch (IllegalStateException e) {
+            return new SendMessage(chatId, "❌ " + e.getMessage());
+        }
     }
 
+    /** Buyurtma statusini o‘zgartirish */
+    public BotApiMethod<?> updateStatus(CallbackQuery query, Long orderId, String status) {
+        String chatId = query.getMessage().getChatId().toString();
+        User user = userService.findByTelegramId(query.getFrom().getId()).orElseThrow();
 
-    /**
-     * Buyurtmalar haqida umumiy ma'lumot matnini yaratish
-     */
+        try {
+            if ("confirm".equals(status)) {
+                orderService.updateStatus(orderId, Order.Status.CONFIRMED);
+                return new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "order_confirmed"));
+            } else if ("cancel".equals(status)) {
+                orderService.updateStatus(orderId, Order.Status.CANCELLED);
+                return new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "order_cancelled"));
+            }
+        } catch (Exception e) {
+            return new SendMessage(chatId, "❌ " + e.getMessage());
+        }
+        return new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "invalid_callback"));
+    }
+
+    /** Buyurtmalar haqida umumiy ma'lumot matnini yaratish */
     private String getOrdersSummary(List<Order> orders, String lang) {
         StringBuilder summary = new StringBuilder(BotUtils.getLocalizedMessage(lang, "orders_summary"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");

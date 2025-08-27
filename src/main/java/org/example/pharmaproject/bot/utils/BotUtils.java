@@ -9,22 +9,22 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class BotUtils {
 
-    /* ======================= INLINE KEYBOARDLAR ======================= */
 
     /** 🌐 Til tanlash keyboard */
     public static InlineKeyboardMarkup createLanguageInlineKeyboard() {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
 
-        row.add(createButton("🇺🇿 O‘zbekcha", "lang_uz"));
-        row.add(createButton("🇷🇺 Русский", "lang_ru"));
-        row.add(createButton("🇬🇧 English", "lang_en"));
-        rows.add(row);
+        rows.add(List.of(
+                createButton("🇺🇿 O‘zbekcha", "lang_uz"),
+                createButton("🇷🇺 Русский", "lang_ru"),
+                createButton("🇬🇧 English", "lang_en")
+        ));
 
         return new InlineKeyboardMarkup(rows);
     }
@@ -34,130 +34,129 @@ public class BotUtils {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         for (Category category : categories) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(createButton(category.getName(), "category_" + category.getId()));
-            rows.add(row);
+            rows.add(List.of(createButton(category.getName(), "CATEGORY_" + category.getId())));
         }
+
+        rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
 
         return new InlineKeyboardMarkup(rows);
     }
 
-    /** 🛒 Mahsulotlar ro‘yxati keyboard */
+    /** 💊 Mahsulotlar ro‘yxati keyboard */
     public static InlineKeyboardMarkup createProductsInlineKeyboard(List<Product> products, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         for (Product product : products) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(createButton(product.getName(), "product_" + product.getId() + "_details"));
-            row.add(createButton(getLocalizedMessage(lang, "add_to_basket"), "product_" + product.getId() + "_add"));
-            rows.add(row);
+            rows.add(List.of(createButton(product.getName(), "PRODUCT_" + product.getId())));
         }
 
-        return new InlineKeyboardMarkup(rows);
-    }
-
-    /** Savatdagi mahsulotlar uchun keyboard */
-    public static InlineKeyboardMarkup createBasketInlineKeyboard(List<Product> products, String lang) {
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        for (Product product : products) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(createButton(product.getName(), "product_" + product.getId() + "_details"));
-            row.add(createButton(getLocalizedMessage(lang, "remove"), "basket_remove_" + product.getId()));
-            rows.add(row);
-        }
-
-        // Yakuniy tugmalar
-        List<InlineKeyboardButton> actionRow = new ArrayList<>();
-        actionRow.add(createButton(getLocalizedMessage(lang, "clear_basket"), "basket_clear"));
-        actionRow.add(createButton(getLocalizedMessage(lang, "checkout"), "basket_checkout"));
-        rows.add(actionRow);
+        rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
 
         return new InlineKeyboardMarkup(rows);
     }
 
-    /** Buyurtmalar keyboard */
-    public static InlineKeyboardMarkup createOrdersInlineKeyboard(List<Order> orders, String lang) {
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        for (Order order : orders) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(createButton("#" + order.getId() + " (" + order.getStatus() + ")", "order_" + order.getId() + "_details"));
-
-            if ("PENDING".equals(order.getStatus())) {
-                row.add(createButton(getLocalizedMessage(lang, "confirm_order"), "order_" + order.getId() + "_confirm"));
-                row.add(createButton(getLocalizedMessage(lang, "cancel_order"), "order_" + order.getId() + "_cancel"));
-            }
-            rows.add(row);
-        }
-
-        return new InlineKeyboardMarkup(rows);
-    }
-
-    /** 🔙 Asosiy menyuga qaytish */
-    public static InlineKeyboardMarkup createBackToMenuKeyboard(String lang) {
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
-
-        row.add(createButton(getLocalizedMessage(lang, "back_to_menu"), "back_to_menu"));
-        rows.add(row);
-
-        return new InlineKeyboardMarkup(rows);
-    }
-
-    /** 📦 Mahsulot tafsilotlari uchun tugmalar */
+    /** ℹ️ Mahsulot tafsilotlari keyboard */
     public static InlineKeyboardMarkup createProductDetailsInline(String productId, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        rows.add(List.of(
+                createButton(getLocalizedMessage(lang, "add_to_basket"), "ADD_TO_BASKET_" + productId)
+        ));
+        rows.add(List.of(
+                createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")
+        ));
+        return new InlineKeyboardMarkup(rows);
+    }
 
-        rows.add(List.of(createButton(getLocalizedMessage(lang, "add_to_basket"), "product_" + productId + "_add")));
-        rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "back_to_menu")));
+    /** 🛒 Savatni boshqarish keyboard */
+    public static InlineKeyboardMarkup createBasketManagementKeyboard(Basket basket, String lang) {
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        if (basket.getProducts() != null && !basket.getProducts().isEmpty()) {
+            // Mahsulotlarni ID bo‘yicha guruhlash
+            Map<Product, Long> productCounts = basket.getProducts().stream()
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+            for (Map.Entry<Product, Long> entry : productCounts.entrySet()) {
+                Product product = entry.getKey();
+                Long count = entry.getValue();
+
+                // Mahsulot nomi va ❌ tugmasi
+                rows.add(List.of(
+                        createButton(product.getName(), "IGNORE"),
+                        createButton("❌", "REMOVE_" + product.getId())
+                ));
+
+                // Miqdor tugmalari
+                rows.add(List.of(
+                        createButton("➖", "DECREASE_" + product.getId()),
+                        createButton(String.valueOf(count), "IGNORE"),
+                        createButton("➕", "INCREASE_" + product.getId())
+                ));
+            }
+
+            // Oxirgi qator
+            rows.add(List.of(
+                    createButton(getLocalizedMessage(lang, "clear_basket"), "BASKET_CLEAR"),
+                    createButton(getLocalizedMessage(lang, "checkout"), "BASKET_CHECKOUT")
+            ));
+        }
+
+        // Back tugmasi
+        rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
 
         return new InlineKeyboardMarkup(rows);
     }
 
-    /** ✅❌ Buyurtma tasdiqlash yoki bekor qilish */
-    public static InlineKeyboardMarkup createOrderActionsInline(Long orderId, String lang) {
+    /** 📜 Buyurtmalar ro‘yhatini chiqarish */
+    public static InlineKeyboardMarkup createOrdersInlineKeyboard(List<Order> orders, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        rows.add(List.of(
-                createButton(getLocalizedMessage(lang, "confirm_order"), "order_" + orderId + "_confirm"),
-                createButton(getLocalizedMessage(lang, "cancel_order"), "order_" + orderId + "_cancel")
-        ));
-
+        for (Order order : orders) {
+            rows.add(List.of(
+                    createButton("#" + order.getId() + " - " + getLocalizedMessage(lang, "cancel_button"),
+                            "CANCEL_ORDER_" + order.getId())
+            ));
+        }
+        rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
         return new InlineKeyboardMarkup(rows);
+    }
+
+    /** ⬅️ Asosiy menyuga qaytish */
+    public static InlineKeyboardMarkup createBackToMenuKeyboard(String lang) {
+        return new InlineKeyboardMarkup(
+                List.of(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")))
+        );
     }
 
     /* ======================= REPLY KEYBOARD ======================= */
 
+    /** 🏠 Asosiy menyu */
     public static ReplyKeyboardMarkup getMainKeyboard(String lang) {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-        keyboardMarkup.setResizeKeyboard(true);
-        keyboardMarkup.setSelective(true);
-
         List<KeyboardRow> keyboard = new ArrayList<>();
 
         KeyboardRow row1 = new KeyboardRow();
-        row1.add(getLocalizedMessage(lang, "menu"));
-        row1.add(getLocalizedMessage(lang, "search"));
+        row1.add(getLocalizedMessage(lang, "menu_button"));
+        row1.add(getLocalizedMessage(lang, "basket_button"));
 
         KeyboardRow row2 = new KeyboardRow();
-        row2.add(getLocalizedMessage(lang, "basket"));
-        row2.add(getLocalizedMessage(lang, "orders"));
+        row2.add(getLocalizedMessage(lang, "orders_button"));
+        row2.add(getLocalizedMessage(lang, "search_button"));
 
         KeyboardRow row3 = new KeyboardRow();
-        row3.add(getLocalizedMessage(lang, "change_language"));
-        row3.add(getLocalizedMessage(lang, "change_address"));
+        row3.add(getLocalizedMessage(lang, "language_button"));
 
         keyboard.add(row1);
         keyboard.add(row2);
         keyboard.add(row3);
 
         keyboardMarkup.setKeyboard(keyboard);
+        keyboardMarkup.setResizeKeyboard(true);
         return keyboardMarkup;
     }
 
-    /* ======================= YORDAMCHI ======================= */
+    /* ======================= YORDAMCHI METODLAR ======================= */
 
+    /** Inline tugma yaratish */
     private static InlineKeyboardButton createButton(String text, String callbackData) {
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText(text);
@@ -165,164 +164,115 @@ public class BotUtils {
         return button;
     }
 
-    /* ======================= TARJIMALAR ======================= */
+    /** 🌐 Lokalizatsiya xabarlari */
     public static String getLocalizedMessage(String lang, String key) {
-        return switch (key) {
-            // START
-            case "welcome_message" -> switch (lang) {
-                case "uz" -> "👋 Salom, aptekaga xush kelibsiz!\nQuyidagi menyudan foydalaning:";
-                case "ru" -> "👋 Здравствуйте, добро пожаловать в аптеку!\nВыберите действие ниже:";
-                case "en" -> "👋 Hello, welcome to the pharmacy!\nPlease use the menu below:";
-                default -> "Welcome!";
-            };
-            case "select_language" -> switch (lang) {
-                case "uz" -> "Iltimos, tilni tanlang:";
-                case "ru" -> "Пожалуйста, выберите язык:";
-                case "en" -> "Please select a language:";
-                default -> "Select language:";
-            };
-            case "language_changed" -> switch (lang) {
-                case "uz" -> "✅ Til muvaffaqiyatli o‘zgartirildi!";
-                case "ru" -> "✅ Язык успешно изменён!";
-                case "en" -> "✅ Language successfully changed!";
-                default -> "Language changed!";
-            };
+        if (lang == null) lang = "uz"; // default til
 
-            // MENU
-            case "menu" -> switch (lang) {
-                case "uz" -> "📋 Menyu";
-                case "ru" -> "📋 Меню";
-                case "en" -> "📋 Menu";
-                default -> "Menu";
-            };
-            case "search" -> switch (lang) {
-                case "uz" -> "🔎 Qidirish";
-                case "ru" -> "🔎 Поиск";
-                case "en" -> "🔎 Search";
-                default -> "Search";
-            };
-            case "basket" -> switch (lang) {
-                case "uz" -> "🛒 Savat";
-                case "ru" -> "🛒 Корзина";
-                case "en" -> "🛒 Basket";
-                default -> "Basket";
-            };
-            case "orders" -> switch (lang) {
-                case "uz" -> "📦 Buyurtmalar";
-                case "ru" -> "📦 Заказы";
-                case "en" -> "📦 Orders";
-                default -> "Orders";
-            };
-            case "change_language" -> switch (lang) {
-                case "uz" -> "🌐 Tilni o‘zgartirish";
-                case "ru" -> "🌐 Сменить язык";
-                case "en" -> "🌐 Change language";
-                default -> "Change language";
-            };
-            case "change_address" -> switch (lang) {
-                case "uz" -> "📍 Manzilni o‘zgartirish";
-                case "ru" -> "📍 Изменить адрес";
-                case "en" -> "📍 Change address";
-                default -> "Change address";
-            };
+        Map<String, Map<String, String>> messages = new HashMap<>();
 
-            // BASKET
-            case "add_to_basket" -> switch (lang) {
-                case "uz" -> "➕ Savatga qo‘shish";
-                case "ru" -> "➕ Добавить в корзину";
-                case "en" -> "➕ Add to basket";
-                default -> "Add to basket";
-            };
-            case "remove" -> switch (lang) {
-                case "uz" -> "❌ O‘chirish";
-                case "ru" -> "❌ Удалить";
-                case "en" -> "❌ Remove";
-                default -> "Remove";
-            };
-            case "clear_basket" -> switch (lang) {
-                case "uz" -> "🗑 Savatni tozalash";
-                case "ru" -> "🗑 Очистить корзину";
-                case "en" -> "🗑 Clear basket";
-                default -> "Clear basket";
-            };
-            case "checkout" -> switch (lang) {
-                case "uz" -> "✅ Buyurtma berish";
-                case "ru" -> "✅ Оформить заказ";
-                case "en" -> "✅ Checkout";
-                default -> "Checkout";
-            };
+        // O‘zbekcha
+        Map<String, String> uz = new HashMap<>();
+        uz.put("welcome_message", "Assalomu alaykum! Botimizga xush kelibsiz. 😊");
+        uz.put("language_changed", "✅ Til muvaffaqiyatli o‘zgartirildi!");
+        uz.put("select_language", "🌐 Iltimos, tilni tanlang:");
+        uz.put("language_button", "🌐 Tilni o‘zgartirish");
+        uz.put("menu_button", "📁 Mahsulotlar");
+        uz.put("basket_button", "🛒 Savat");
+        uz.put("orders_button", "📜 Buyurtmalarim");
+        uz.put("search_button", "🔎 Qidirish");
+        uz.put("back_to_menu", "⬅️ Asosiy menyuga qaytish");
+        uz.put("cancel_button", "❌ Bekor qilish");
+        uz.put("add_to_basket", "🛒 Savatga qo'shish");
+        uz.put("clear_basket", "Savatni tozalash");
+        uz.put("checkout", "Buyurtma berish");
+        uz.put("unknown_command", "Kechirasiz, bu buyruq tushunarsiz.");
+        uz.put("n_orders", "Sizning buyurtmalaringiz mavjud emas.");
+        uz.put("menu_message", "Kategoriyalar ro‘yxati:");
+        uz.put("empty_basket", "Savat bo‘sh.");
+        uz.put("enter_search_query", "Iltimos, qidiruv so‘rovini kiriting:");
+        uz.put("no_results", "Hech qanday natija topilmadi.");
+        uz.put("search_results", "Qidiruv natijalari:");
+        uz.put("order_created", "Buyurtma #%d muvaffaqiyatli yaratildi!\nManzil: %s");
+        uz.put("order_confirmed", "Buyurtma tasdiqlandi.");
+        uz.put("order_cancelled", "Buyurtma bekor qilindi.");
+        uz.put("invalid_callback", "Noto‘g‘ri amal qilindi.");
+        uz.put("orders_summary", "Sizning buyurtmalaringiz:");
+        uz.put("order_status_pending", "Kutilmoqda");
+        uz.put("order_status_confirmed", "Tasdiqlangan");
+        uz.put("order_status_cancelled", "Bekor qilingan");
+        uz.put("product_added_to_basket", "Mahsulot savatga qo‘shirildi.");
+        uz.put("basket_cleared", "Savat tozalandi.");
+        messages.put("uz", uz);
 
-            // ORDERS
-            case "confirm_order" -> switch (lang) {
-                case "uz" -> "✅ Tasdiqlash";
-                case "ru" -> "✅ Подтвердить";
-                case "en" -> "✅ Confirm";
-                default -> "Confirm";
-            };
-            case "cancel_order" -> switch (lang) {
-                case "uz" -> "❌ Bekor qilish";
-                case "ru" -> "❌ Отменить";
-                case "en" -> "❌ Cancel";
-                default -> "Cancel";
-            };
+        // Русский
+        Map<String, String> ru = new HashMap<>();
+        ru.put("welcome_message", "Здравствуйте! Добро пожаловать в наш бот. 😊");
+        ru.put("language_changed", "✅ Язык успешно изменен!");
+        ru.put("select_language", "🌐 Пожалуйста, выберите язык:");
+        ru.put("language_button", "🌐 Изменить язык");
+        ru.put("menu_button", "📁 Продукты");
+        ru.put("basket_button", "🛒 Корзина");
+        ru.put("orders_button", "📜 Мои заказы");
+        ru.put("search_button", "🔎 Поиск");
+        ru.put("back_to_menu", "⬅️ Вернуться в меню");
+        ru.put("cancel_button", "❌ Отменить");
+        ru.put("add_to_basket", "🛒 Добавить в корзину");
+        ru.put("clear_basket", "Очистить корзину");
+        ru.put("checkout", "Оформить заказ");
+        ru.put("unknown_command", "Извините, эта команда непонятна.");
+        ru.put("n_orders", "У вас нет заказов.");
+        ru.put("menu_message", "Список категорий:");
+        ru.put("empty_basket", "Корзина пуста.");
+        ru.put("enter_search_query", "Пожалуйста, введите запрос для поиска:");
+        ru.put("no_results", "Результатов не найдено.");
+        ru.put("search_results", "Результаты поиска:");
+        ru.put("order_created", "Заказ #%d успешно создан!\nАдрес: %s");
+        ru.put("order_confirmed", "Заказ подтверждён.");
+        ru.put("order_cancelled", "Заказ отменён.");
+        ru.put("invalid_callback", "Некорректное действие.");
+        ru.put("orders_summary", "Ваши заказы:");
+        ru.put("order_status_pending", "Ожидает");
+        ru.put("order_status_confirmed", "Подтверждён");
+        ru.put("order_status_cancelled", "Отменён");
+        ru.put("product_added_to_basket", "Продукт добавлен в корзину.");
+        ru.put("basket_cleared", "Корзина очищена.");
+        messages.put("ru", ru);
 
-            // SEARCH
-            case "no_results" -> switch (lang) {
-                case "uz" -> "❌ Hech narsa topilmadi";
-                case "ru" -> "❌ Ничего не найдено";
-                case "en" -> "❌ No results found";
-                default -> "No results";
-            };
-            case "search_results" -> switch (lang) {
-                case "uz" -> "🔎 Qidiruv natijalari: ";
-                case "ru" -> "🔎 Результаты поиска: ";
-                case "en" -> "🔎 Search results: ";
-                default -> "Results: ";
-            };
-            case "product_details" -> switch (lang) {
-                case "uz" -> "%s\n💵 Narxi: %s\n📦 Soni: %d dona";
-                case "ru" -> "%s\n💵 Цена: %s\n📦 Кол-во: %d шт";
-                case "en" -> "%s\n💵 Price: %s\n📦 Quantity: %d pcs";
-                default -> "%s - %s";
-            };
+        // English
+        Map<String, String> en = new HashMap<>();
+        en.put("welcome_message", "Hello! Welcome to our bot. 😊");
+        en.put("language_changed", "✅ Language successfully changed!");
+        en.put("select_language", "🌐 Please select your language:");
+        en.put("language_button", "🌐 Change language");
+        en.put("menu_button", "📁 Products");
+        en.put("basket_button", "🛒 Basket");
+        en.put("orders_button", "📜 My orders");
+        en.put("search_button", "🔎 Search");
+        en.put("back_to_menu", "⬅️ Back to menu");
+        en.put("cancel_button", "❌ Cancel");
+        en.put("add_to_basket", "🛒 Add to basket");
+        en.put("clear_basket", "Clear basket");
+        en.put("checkout", "Checkout");
+        en.put("unknown_command", "Sorry, this command is not recognized.");
+        en.put("n_orders", "You have no orders.");
+        en.put("menu_message", "Category list:");
+        en.put("empty_basket", "Your basket is empty.");
+        en.put("enter_search_query", "Please enter your search query:");
+        en.put("no_results", "No results found.");
+        en.put("search_results", "Search results:");
+        en.put("order_created", "Order #%d created successfully!\nAddress: %s");
+        en.put("order_confirmed", "Order confirmed.");
+        en.put("order_cancelled", "Order cancelled.");
+        en.put("invalid_callback", "Invalid action.");
+        en.put("orders_summary", "Your orders:");
+        en.put("order_status_pending", "Pending");
+        en.put("order_status_confirmed", "Confirmed");
+        en.put("order_status_cancelled", "Cancelled");
+        en.put("product_added_to_basket", "Product added to basket.");
+        en.put("basket_cleared", "Basket cleared.");
+        messages.put("en", en);
 
-            // BACK
-            case "back_to_menu" -> switch (lang) {
-                case "uz" -> "⬅️ Asosiy menyuga qaytish";
-                case "ru" -> "⬅️ Вернуться в меню";
-                case "en" -> "⬅️ Back to menu";
-                default -> "Back to menu";
-            };
-            case "cancel" -> switch (lang) {
-                case "uz" -> "❌ Bekor qilish";
-                case "ru" -> "❌ Отменить";
-                case "en" -> "❌ Cancel";
-                default -> "Cancel";
-            };
-
-            // DEFAULT
-            default -> "Unknown message";
-        };
-    }
-
-    /* ======================= SAVAT MANAGEMENT ======================= */
-
-    public static InlineKeyboardMarkup createBasketManagementKeyboard(Basket basket, String lang) {
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        if (basket.getProducts() != null && !basket.getProducts().isEmpty()) {
-            for (Product product : basket.getProducts()) {
-                rows.add(List.of(createButton(product.getName() + " ❌", "basket_remove_" + product.getId())));
-            }
-
-            rows.add(List.of(
-                    createButton(getLocalizedMessage(lang, "clear_basket"), "basket_clear"),
-                    createButton(getLocalizedMessage(lang, "checkout"), "basket_checkout")
-            ));
-        } else {
-            rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "back_to_menu")));
-        }
-
-        return new InlineKeyboardMarkup(rows);
+        return messages.getOrDefault(lang.toLowerCase(), messages.get("uz"))
+                .getOrDefault(key, key);
     }
 }
