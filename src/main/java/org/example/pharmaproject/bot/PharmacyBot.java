@@ -16,7 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 public class PharmacyBot extends TelegramLongPollingBot {
 
     private static final Logger LOGGER = Logger.getLogger(PharmacyBot.class.getName());
-    private final ExecutorService executor = Executors.newFixedThreadPool(10); // bir vaqtda 10 ta oqim
+    private final ExecutorService executor = Executors.newCachedThreadPool(); // Optimallashtirilgan thread pool
 
     @Value("${telegrambot.userName}")
     private String botUsername;
@@ -41,12 +41,24 @@ public class PharmacyBot extends TelegramLongPollingBot {
     private final BasketHandler basketHandler;
     private final OrderHandler orderHandler;
 
-    // tezkor tekshiruv uchun tayyor setlar
-    private static final Set<String> PRODUCT_COMMANDS = Set.of("📁 Mahsulotlar", "📁 Products", "📁 Товары");
-    private static final Set<String> SEARCH_COMMANDS = Set.of("🔎 Qidirish", "🔎 Search", "🔎 Поиск");
-    private static final Set<String> BASKET_COMMANDS = Set.of("🛒 Savat", "🛒 Basket", "🛒 Корзина");
-    private static final Set<String> ORDERS_COMMANDS = Set.of("📜 Buyurtmalarim", "📜 Orders", "📜 Заказы");
-    private static final Set<String> LANGUAGE_COMMANDS = Set.of("🌐 Tilni o‘zgartirish", "🌐 Change Language", "🌐 Сменить язык");
+    // Tugma matnlari -> internal command map
+    private static final Map<String, String> REPLY_KEYBOARD_COMMANDS = Map.ofEntries(
+            Map.entry(BotUtils.getLocalizedMessage("uz", "menu_button"), "PRODUCTS"),
+            Map.entry(BotUtils.getLocalizedMessage("en", "menu_button"), "PRODUCTS"),
+            Map.entry(BotUtils.getLocalizedMessage("ru", "menu_button"), "PRODUCTS"),
+            Map.entry(BotUtils.getLocalizedMessage("uz", "basket_button"), "BASKET"),
+            Map.entry(BotUtils.getLocalizedMessage("en", "basket_button"), "BASKET"),
+            Map.entry(BotUtils.getLocalizedMessage("ru", "basket_button"), "BASKET"),
+            Map.entry(BotUtils.getLocalizedMessage("uz", "orders_button"), "ORDERS"),
+            Map.entry(BotUtils.getLocalizedMessage("en", "orders_button"), "ORDERS"),
+            Map.entry(BotUtils.getLocalizedMessage("ru", "orders_button"), "ORDERS"),
+            Map.entry(BotUtils.getLocalizedMessage("uz", "language_button"), "LANGUAGE"),
+            Map.entry(BotUtils.getLocalizedMessage("en", "language_button"), "LANGUAGE"),
+            Map.entry(BotUtils.getLocalizedMessage("ru", "language_button"), "LANGUAGE"),
+            Map.entry(BotUtils.getLocalizedMessage("uz", "search_button"), "SEARCH"),
+            Map.entry(BotUtils.getLocalizedMessage("en", "search_button"), "SEARCH"),
+            Map.entry(BotUtils.getLocalizedMessage("ru", "search_button"), "SEARCH")
+    );
 
     @Autowired
     public PharmacyBot(UserService userService,
@@ -65,7 +77,7 @@ public class PharmacyBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        executor.submit(() -> { // har bir update alohida oqimda
+        executor.submit(() -> {
             try {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     handleMessage(update.getMessage());
@@ -73,7 +85,7 @@ public class PharmacyBot extends TelegramLongPollingBot {
                     handleCallbackQuery(update.getCallbackQuery());
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "❌ Xato onUpdateReceived ichida: " + e.getMessage(), e);
+                LOGGER.log(Level.SEVERE, "❌ onUpdateReceived xatosi: " + e.getMessage(), e);
             }
         });
     }
@@ -97,25 +109,29 @@ public class PharmacyBot extends TelegramLongPollingBot {
                 response = orderHandler.handleFinalizeOrder(message, user);
             } else if ("/start".equals(text)) {
                 response = startHandler.handleStart(message);
-            } else if (PRODUCT_COMMANDS.contains(text)) {
-                response = menuHandler.handleMenu(message, user);
-            } else if (SEARCH_COMMANDS.contains(text)) {
-                response = searchHandler.handleSearchPrompt(message, user);
-            } else if (BASKET_COMMANDS.contains(text)) {
-                response = basketHandler.handleBasket(message, user);
-            } else if (ORDERS_COMMANDS.contains(text)) {
-                response = orderHandler.handleOrders(message, user);
-            } else if (LANGUAGE_COMMANDS.contains(text)) {
-                response = startHandler.handleLanguageSelection(message, user);
-            } else if (text.startsWith("Qidir: ") || text.startsWith("🔎 Поиск: ") || text.startsWith("🔍 Search: ")) {
-                String query = text.substring(text.indexOf(":") + 1).trim();
-                response = searchHandler.handleSearch(message, query, user);
             } else {
-                response = new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
+                String command = REPLY_KEYBOARD_COMMANDS.get(text);
+                if (command == null) {
+                    if (text.startsWith(BotUtils.getLocalizedMessage(user.getLanguage(), "search_button") + ": ")) {
+                        String query = text.substring(text.indexOf(":") + 1).trim();
+                        response = searchHandler.handleSearch(message, query, user);
+                    } else {
+                        response = new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
+                    }
+                } else {
+                    switch (command) {
+                        case "PRODUCTS" -> response = menuHandler.handleMenu(message, user);
+                        case "BASKET" -> response = basketHandler.handleBasket(message, user);
+                        case "ORDERS" -> response = orderHandler.handleOrders(message, user);
+                        case "LANGUAGE" -> response = startHandler.handleLanguageSelection(message, user);
+                        case "SEARCH" -> response = searchHandler.handleSearchPrompt(message, user);
+                        default -> response = new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "unknown_command"));
+                    }
+                }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "❌ Xabar ishlashda xato: " + e.getMessage(), e);
-            response = new SendMessage(chatId, "❌ Kutilmagan xatolik yuz berdi. Qaytadan urinib ko‘ring.");
+            LOGGER.log(Level.WARNING, "❌ Xabar ishlov berishda xato: " + e.getMessage(), e);
+            response = new SendMessage(chatId, BotUtils.getLocalizedMessage(user.getLanguage(), "error_message"));
         }
 
         executeResponse(response);
@@ -136,7 +152,7 @@ public class PharmacyBot extends TelegramLongPollingBot {
             } else if (data.startsWith("product_")) {
                 response = menuHandler.handleProductDetails(query, data.substring(8));
             } else if (data.startsWith("add_to_basket_")) {
-                response = basketHandler.handleAddToBasket(query, data.substring(15));
+                response = basketHandler.handleAddToBasket(query, data.substring(14));
             } else if (data.startsWith("basket_")) {
                 String[] parts = data.split("_");
                 if (parts.length >= 3) {
@@ -164,7 +180,7 @@ public class PharmacyBot extends TelegramLongPollingBot {
                 response = defaultCallbackResponse(chatId, messageId, user);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "❌ Callback ishlashda xato: " + e.getMessage(), e);
+            LOGGER.log(Level.WARNING, "❌ Callback ishlov berishda xato: " + e.getMessage(), e);
             response = defaultCallbackResponse(chatId, messageId, user);
         }
 
