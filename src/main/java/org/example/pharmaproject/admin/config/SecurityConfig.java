@@ -25,8 +25,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")      // login.html sahifamiz
-                        .defaultSuccessUrl("/dashboard", true)
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/admin/dashboard", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -37,4 +37,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }
