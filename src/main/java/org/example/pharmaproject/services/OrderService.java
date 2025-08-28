@@ -26,6 +26,11 @@ public class OrderService {
         this.basketService = basketService;
     }
 
+    public long countOrders() {
+        return orderRepository.count();
+    }
+
+
     @Transactional
     public Order createOrderFromBasket(User user) {
         Basket basket = basketService.getBasketByUser(user);
@@ -36,14 +41,13 @@ public class OrderService {
         Order order = new Order();
         order.setUser(user);
 
-        // Buyurtmadagi mahsulotlar ro'yxatini to'g'ri nusxalash
         List<Product> productsInOrder = new ArrayList<>();
         for (Product product : basket.getProducts()) {
-            Product newProduct = new Product(); // Mahsulotni nusxalash
+            Product newProduct = new Product();
             newProduct.setId(product.getId());
             newProduct.setName(product.getName());
             newProduct.setPrice(product.getPrice());
-            newProduct.setQuantity(product.getQuantityInBasket()); // quantityInBasket ni quantity sifatida saqlash
+            newProduct.setQuantity(product.getQuantityInBasket());
             productsInOrder.add(newProduct);
         }
         order.setProducts(productsInOrder);
@@ -51,7 +55,7 @@ public class OrderService {
         order.setStatus(Order.Status.PENDING);
         order.setCreatedAt(LocalDateTime.now());
 
-        // Buyurtma yaratilgandan so'ng savatni tozalash
+        // Buyurtma yaratilgandan keyin savatni tozalash
         basketService.clearBasket(user);
 
         return orderRepository.save(order);
@@ -74,5 +78,10 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Optional<Order> findById(Long orderId) {
         return orderRepository.findById(orderId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Order> findAll() {
+        return orderRepository.findAll();
     }
 }

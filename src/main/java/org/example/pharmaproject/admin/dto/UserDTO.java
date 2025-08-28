@@ -1,4 +1,15 @@
 package org.example.pharmaproject.admin.dto;
 
-public class UserDTO {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserDto {
+    private Long id;
+    private String username;
+    private String phoneNumber;
+    private String address;
 }

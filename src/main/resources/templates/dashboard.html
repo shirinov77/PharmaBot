@@ -1,10 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title th:text="${title}">Dashboard</title>
 </head>
 <body>
+<h1 th:text="${title}"></h1>
+<hr>
+
+<table border="1" cellpadding="15" cellspacing="0" width="80%">
+    <tr bgcolor="#f2f2f2">
+        <th>Ko‘rsatkich</th>
+        <th>Qiymat</th>
+    </tr>
+    <tr>
+        <td>Umumiy foydalanuvchilar</td>
+        <td th:text="${totalUsers}"></td>
+    </tr>
+    <tr>
+        <td>Umumiy buyurtmalar</td>
+        <td th:text="${totalOrders}"></td>
+    </tr>
+    <tr>
+        <td>Umumiy mahsulotlar</td>
+        <td th:text="${totalProducts}"></td>
+    </tr>
+    <tr>
+        <td>Umumiy tushum (so‘m)</td>
+        <td th:text="${totalRevenue}"></td>
+    </tr>
+</table>
 
 </body>
 </html>

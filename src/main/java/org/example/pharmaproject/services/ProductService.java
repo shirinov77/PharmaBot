@@ -27,6 +27,9 @@ public class ProductService {
         }
         return productRepository.findByNameContainingIgnoreCase(name);
     }
+    public long countProducts() {
+        return productRepository.count();
+    }
 
     @Transactional
     public Product save(Product product) {

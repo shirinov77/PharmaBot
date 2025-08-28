@@ -40,7 +40,7 @@ public class Product {
     private Integer quantity = 0;
 
     @Column(length = 1000)
-    private String description; // Mahsulot tavsifi
+    private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
