@@ -15,43 +15,34 @@ import java.util.stream.Collectors;
 
 public class BotUtils {
 
-
     /** 🌐 Til tanlash keyboard */
     public static InlineKeyboardMarkup createLanguageInlineKeyboard() {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
         rows.add(List.of(
                 createButton("🇺🇿 O‘zbekcha", "lang_uz"),
                 createButton("🇷🇺 Русский", "lang_ru"),
                 createButton("🇬🇧 English", "lang_en")
         ));
-
         return new InlineKeyboardMarkup(rows);
     }
 
     /** 📂 Kategoriya keyboard */
     public static InlineKeyboardMarkup createCategoryInlineKeyboard(List<Category> categories, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
         for (Category category : categories) {
-            rows.add(List.of(createButton(category.getName(), "CATEGORY_" + category.getId())));
+            rows.add(List.of(createButton(category.getName(), "category_" + category.getId())));
         }
-
         rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
-
         return new InlineKeyboardMarkup(rows);
     }
 
     /** 💊 Mahsulotlar ro‘yxati keyboard */
     public static InlineKeyboardMarkup createProductsInlineKeyboard(List<Product> products, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
         for (Product product : products) {
-            rows.add(List.of(createButton(product.getName(), "PRODUCT_" + product.getId())));
+            rows.add(List.of(createButton(product.getName(), "product_" + product.getId())));
         }
-
         rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
-
         return new InlineKeyboardMarkup(rows);
     }
 
@@ -59,7 +50,7 @@ public class BotUtils {
     public static InlineKeyboardMarkup createProductDetailsInline(String productId, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         rows.add(List.of(
-                createButton(getLocalizedMessage(lang, "add_to_basket"), "ADD_TO_BASKET_" + productId)
+                createButton(getLocalizedMessage(lang, "add_to_basket"), "add_to_basket_" + productId)
         ));
         rows.add(List.of(
                 createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")
@@ -70,40 +61,28 @@ public class BotUtils {
     /** 🛒 Savatni boshqarish keyboard */
     public static InlineKeyboardMarkup createBasketManagementKeyboard(Basket basket, String lang) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
         if (basket.getProducts() != null && !basket.getProducts().isEmpty()) {
-            // Mahsulotlarni ID bo‘yicha guruhlash
             Map<Product, Long> productCounts = basket.getProducts().stream()
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-
             for (Map.Entry<Product, Long> entry : productCounts.entrySet()) {
                 Product product = entry.getKey();
                 Long count = entry.getValue();
-
-                // Mahsulot nomi va ❌ tugmasi
                 rows.add(List.of(
                         createButton(product.getName(), "IGNORE"),
-                        createButton("❌", "REMOVE_" + product.getId())
+                        createButton("❌", "basket_remove_" + product.getId())
                 ));
-
-                // Miqdor tugmalari
                 rows.add(List.of(
-                        createButton("➖", "DECREASE_" + product.getId()),
+                        createButton("➖", "basket_decrease_" + product.getId()),
                         createButton(String.valueOf(count), "IGNORE"),
-                        createButton("➕", "INCREASE_" + product.getId())
+                        createButton("➕", "basket_increase_" + product.getId())
                 ));
             }
-
-            // Oxirgi qator
             rows.add(List.of(
-                    createButton(getLocalizedMessage(lang, "clear_basket"), "BASKET_CLEAR"),
-                    createButton(getLocalizedMessage(lang, "checkout"), "BASKET_CHECKOUT")
+                    createButton(getLocalizedMessage(lang, "clear_basket"), "basket_clear"),
+                    createButton(getLocalizedMessage(lang, "checkout"), "basket_checkout")
             ));
         }
-
-        // Back tugmasi
         rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
-
         return new InlineKeyboardMarkup(rows);
     }
 
@@ -113,7 +92,7 @@ public class BotUtils {
         for (Order order : orders) {
             rows.add(List.of(
                     createButton("#" + order.getId() + " - " + getLocalizedMessage(lang, "cancel_button"),
-                            "CANCEL_ORDER_" + order.getId())
+                            "order_" + order.getId() + "_cancel")
             ));
         }
         rows.add(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")));
@@ -126,8 +105,6 @@ public class BotUtils {
                 List.of(List.of(createButton(getLocalizedMessage(lang, "back_to_menu"), "BACK_TO_MENU")))
         );
     }
-
-    /* ======================= REPLY KEYBOARD ======================= */
 
     /** 🏠 Asosiy menyu */
     public static ReplyKeyboardMarkup getMainKeyboard(String lang) {
@@ -154,8 +131,6 @@ public class BotUtils {
         return keyboardMarkup;
     }
 
-    /* ======================= YORDAMCHI METODLAR ======================= */
-
     /** Inline tugma yaratish */
     private static InlineKeyboardButton createButton(String text, String callbackData) {
         InlineKeyboardButton button = new InlineKeyboardButton();
@@ -166,8 +141,7 @@ public class BotUtils {
 
     /** 🌐 Lokalizatsiya xabarlari */
     public static String getLocalizedMessage(String lang, String key) {
-        if (lang == null) lang = "uz"; // default til
-
+        if (lang == null) lang = "uz";
         Map<String, Map<String, String>> messages = new HashMap<>();
 
         // O‘zbekcha
@@ -186,6 +160,7 @@ public class BotUtils {
         uz.put("clear_basket", "Savatni tozalash");
         uz.put("checkout", "Buyurtma berish");
         uz.put("unknown_command", "Kechirasiz, bu buyruq tushunarsiz.");
+        uz.put("error_message", "❌ Kutilmagan xatolik yuz berdi. Qaytadan urinib ko‘ring.");
         uz.put("n_orders", "Sizning buyurtmalaringiz mavjud emas.");
         uz.put("menu_message", "Kategoriyalar ro‘yxati:");
         uz.put("empty_basket", "Savat bo‘sh.");
@@ -220,6 +195,7 @@ public class BotUtils {
         ru.put("clear_basket", "Очистить корзину");
         ru.put("checkout", "Оформить заказ");
         ru.put("unknown_command", "Извините, эта команда непонятна.");
+        ru.put("error_message", "❌ Произошла непредвиденная ошибка. Попробуйте снова.");
         ru.put("n_orders", "У вас нет заказов.");
         ru.put("menu_message", "Список категорий:");
         ru.put("empty_basket", "Корзина пуста.");
@@ -254,6 +230,7 @@ public class BotUtils {
         en.put("clear_basket", "Clear basket");
         en.put("checkout", "Checkout");
         en.put("unknown_command", "Sorry, this command is not recognized.");
+        en.put("error_message", "❌ An unexpected error occurred. Please try again.");
         en.put("n_orders", "You have no orders.");
         en.put("menu_message", "Category list:");
         en.put("empty_basket", "Your basket is empty.");
