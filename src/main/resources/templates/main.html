@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Main Page</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c6bac;
+            --primary-dark: #1a4f8b;
+            --secondary: #4CAF50;
+            --accent: #ff6b6b;
+            --background: #f5f7fa;
+            --surface: #ffffff;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--background);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .menu-card {
+            background-color: var(--surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .menu-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .menu-card.dashboard { background: linear-gradient(135deg, #2c6bac, #1a4f8b); }
+        .menu-card.users { background: linear-gradient(135deg, #4CAF50, #3d8b40); }
+        .menu-card.products { background: linear-gradient(135deg, #ff6b6b, #ff3b3b); }
+        .menu-card.orders { background: linear-gradient(135deg, #ffc107, #ff9800); }
+        .menu-card.logout { background: linear-gradient(135deg, #555, #222); }
+
+        .menu-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 30px 10px;
+            }
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+            .menu-card {
+                padding: 25px 15px;
+                font-size: 1rem;
+            }
+            .menu-card i {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Admin Main Menu</h1>
+
+<div class="menu-grid">
+    <a th:href="@{/admin/dashboard}" class="menu-card dashboard">
+        <i class="fas fa-tachometer-alt"></i>
+        Dashboard
+    </a>
+    <a th:href="@{/admin/users}" class="menu-card users">
+        <i class="fas fa-users"></i>
+        Foydalanuvchilar
+    </a>
+    <a th:href="@{/admin/products}" class="menu-card products">
+        <i class="fas fa-pills"></i>
+        Mahsulotlar
+    </a>
+    <a th:href="@{/admin/orders}" class="menu-card orders">
+        <i class="fas fa-shopping-cart"></i>
+        Buyurtmalar
+    </a>
+    <a th:href="@{/logout}" class="menu-card logout">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
+    </a>
+</div>
+
+</body>
+</html>

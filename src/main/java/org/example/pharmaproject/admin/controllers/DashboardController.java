@@ -23,7 +23,6 @@ public class DashboardController {
         long totalUsers = userRepository.count();
         long totalOrders = orderRepository.count();
         long totalProducts = productRepository.count();
-
         double totalRevenue = orderRepository.findAll().stream()
                 .mapToDouble(order -> order.getTotalPrice() != null ? order.getTotalPrice() : 0)
                 .sum();
