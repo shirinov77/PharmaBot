@@ -11,8 +11,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByNameContainingIgnoreCase(String name);
 
-    List<Product> findByCategory(Category category);
-
-    @Query("SELECT p FROM Product p WHERE p.quantity > 0")
-    List<Product> findInStockProducts();
+    long count();
 }

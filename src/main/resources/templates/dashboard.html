@@ -5,336 +5,348 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apteka Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Asosiy stil va o'zgaruvchilar */
-        :root {
-            --primary: #2c6bac;
-            --primary-light: #5a8ec9;
-            --primary-dark: #1a4f8b;
-            --secondary: #4CAF50;
-            --secondary-light: #6bc46d;
-            --secondary-dark: #3d8b40;
-            --accent: #ff6b6b;
-            --accent-light: #ff8e8e;
-            --warning: #ffc107;
-            --warning-light: #ffd54f;
-            --light: #f8fafc;
-            --dark: #2d3748;
-            --gray: #718096;
-            --light-gray: #e2e8f0;
-            --background: #f5f7fa;
-            --surface: #ffffff;
-            --border-radius: 12px;
-            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.05);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+</head>
+<style>
+    /* Asosiy stil va o'zgaruvchilar */
+    :root {
+        --primary: #2c6bac;
+        --primary-light: #5a8ec9;
+        --primary-dark: #1a4f8b;
+        --secondary: #4CAF50;
+        --secondary-light: #6bc46d;
+        --secondary-dark: #3d8b40;
+        --accent: #ff6b6b;
+        --accent-light: #ff8e8e;
+        --warning: #ffc107;
+        --warning-light: #ffd54f;
+        --light: #f8fafc;
+        --dark: #2d3748;
+        --gray: #718096;
+        --light-gray: #e2e8f0;
+        --background: #f5f7fa;
+        --surface: #ffffff;
+        --border-radius: 12px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        /* Umumiy stil */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    /* Umumiy stil */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background-color: var(--background);
+        color: var(--dark);
+        line-height: 1.6;
+        padding: 20px;
+    }
+
+    /* Sarlavha va boshqalar */
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: var(--surface);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+
+    h1 {
+        color: var(--primary);
+        margin: 0 0 10px;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .subtitle {
+        color: var(--gray);
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, var(--light-gray), transparent);
+        margin: 30px 0;
+    }
+
+    /* Statistik kartalar */
+    .stats-container {
+        background: var(--surface);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin: 20px auto;
+        max-width: 1200px;
+        box-shadow: var(--box-shadow);
+    }
+
+    .stats-title {
+        color: var(--primary);
+        margin-top: 0;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--light-gray);
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stats-title i {
+        font-size: 1.3em;
+    }
+
+    .stats-grid {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--light) 0%, var(--surface) 100%);
+        padding: 25px 20px;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:nth-child(2) {
+        border-left-color: var(--secondary);
+    }
+
+    .stat-card:nth-child(3) {
+        border-left-color: var(--accent);
+    }
+
+    .stat-card:nth-child(4) {
+        border-left-color: var(--warning);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+        z-index: 1;
+    }
+
+    .stat-value {
+        font-weight: bold;
+        font-size: 1.8rem;
+        color: var(--primary);
+        display: block;
+        margin-top: 8px;
+    }
+
+    .stat-card:nth-child(2) .stat-value {
+        color: var(--secondary);
+    }
+
+    .stat-card:nth-child(3) .stat-value {
+        color: var(--accent);
+    }
+
+    .stat-card:nth-child(4) .stat-value {
+        color: var(--warning);
+    }
+
+    /* So'nggi buyurtmalar bo'limi */
+    .orders-container {
+        background: var(--surface);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin: 20px auto;
+        max-width: 1200px;
+        box-shadow: var(--box-shadow);
+        overflow-x: auto;
+    }
+
+    .orders-title {
+        color: var(--primary);
+        margin-top: 0;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--light-gray);
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .orders-title i {
+        font-size: 1.3em;
+    }
+
+    /* Jadval stillari */
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 15px;
+        min-width: 800px;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+
+    thead {
+        background: linear-gradient(to right, var(--primary), var(--primary-dark));
+        color: white;
+    }
+
+    th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: 0.3px;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid var(--light-gray);
+        transition: var(--transition);
+        background: var(--surface);
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    tbody tr:hover {
+        background-color: rgba(44, 107, 172, 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    td {
+        padding: 16px;
+        color: var(--dark);
+    }
+
+    /* Status ranglari */
+    .status-pending {
+        color: #ff9800;
+        background-color: rgba(255, 152, 0, 0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-confirmed {
+        color: #2196f3;
+        background-color: rgba(33, 150, 243, 0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-delivered {
+        color: var(--secondary);
+        background-color: rgba(76, 175, 80, 0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-cancelled {
+        color: #f44336;
+        background-color: rgba(244, 67, 54, 0.1);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    /* Responsive dizayn */
+    @media (max-width: 768px) {
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: var(--background);
-            color: var(--dark);
-            line-height: 1.6;
-            padding: 20px;
-        }
-
-        /* Sarlavha va boshqalar */
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: var(--surface);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            padding: 15px;
         }
 
         h1 {
-            color: var(--primary);
-            margin: 0 0 10px;
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            color: var(--gray);
-            font-size: 1.1rem;
-            margin: 0;
-        }
-
-        hr {
-            border: 0;
-            height: 1px;
-            background: linear-gradient(to right, transparent, var(--light-gray), transparent);
-            margin: 30px 0;
-        }
-
-        /* Statistik kartalar */
-        .stats-container {
-            background: var(--surface);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            margin: 20px auto;
-            max-width: 1200px;
-            box-shadow: var(--box-shadow);
-        }
-
-        .stats-title {
-            color: var(--primary);
-            margin-top: 0;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--light-gray);
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .stats-title i {
-            font-size: 1.3em;
+            font-size: 2rem;
         }
 
         .stats-grid {
-            list-style: none;
-            padding: 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, var(--light) 0%, var(--surface) 100%);
-            padding: 25px 20px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            border-left: 4px solid var(--primary);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:nth-child(2) {
-            border-left-color: var(--secondary);
-        }
-
-        .stat-card:nth-child(3) {
-            border-left-color: var(--accent);
-        }
-
-        .stat-card:nth-child(4) {
-            border-left-color: var(--warning);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-            z-index: 1;
-        }
-
-        .stat-value {
-            font-weight: bold;
-            font-size: 1.8rem;
-            color: var(--primary);
-            display: block;
-            margin-top: 8px;
-        }
-
-        .stat-card:nth-child(2) .stat-value {
-            color: var(--secondary);
-        }
-
-        .stat-card:nth-child(3) .stat-value {
-            color: var(--accent);
-        }
-
-        .stat-card:nth-child(4) .stat-value {
-            color: var(--warning);
-        }
-
-        /* So'nggi buyurtmalar bo'limi */
-        .orders-container {
-            background: var(--surface);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            margin: 20px auto;
-            max-width: 1200px;
-            box-shadow: var(--box-shadow);
-            overflow-x: auto;
-        }
-
-        .orders-title {
-            color: var(--primary);
-            margin-top: 0;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--light-gray);
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .orders-title i {
-            font-size: 1.3em;
-        }
-
-        /* Jadval stillari */
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 15px;
-            min-width: 800px;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-        }
-
-        thead {
-            background: linear-gradient(to right, var(--primary), var(--primary-dark));
-            color: white;
-        }
-
-        th {
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: 0.3px;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--light-gray);
-            transition: var(--transition);
-            background: var(--surface);
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
-
-        tbody tr:hover {
-            background-color: rgba(44, 107, 172, 0.05);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        td {
-            padding: 16px;
-            color: var(--dark);
-        }
-
-        /* Status ranglari */
-        .status-pending {
-            color: #ff9800;
-            background-color: rgba(255, 152, 0, 0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .status-confirmed {
-            color: #2196f3;
-            background-color: rgba(33, 150, 243, 0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .status-delivered {
-            color: var(--secondary);
-            background-color: rgba(76, 175, 80, 0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .status-cancelled {
-            color: #f44336;
-            background-color: rgba(244, 67, 54, 0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        /* Responsive dizayn */
-        @media (max-width: 768px) {
-            body {
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-container, .orders-container {
-                padding: 20px;
-                margin: 15px 0;
-            }
-
-            th, td {
-                padding: 12px;
-                font-size: 0.9rem;
-            }
-
-            .stat-value {
-                font-size: 1.5rem;
-            }
-        }
-
-        /* Animatsiyalar */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            grid-template-columns: 1fr;
         }
 
         .stats-container, .orders-container {
-            animation: fadeIn 0.6s ease forwards;
+            padding: 20px;
+            margin: 15px 0;
         }
 
-        .stat-card {
-            animation: fadeIn 0.6s ease forwards;
+        th, td {
+            padding: 12px;
+            font-size: 0.9rem;
         }
 
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-
-        tbody tr {
-            animation: fadeIn 0.5s ease forwards;
+        .stat-value {
+            font-size: 1.5rem;
         }
-    </style>
-</head>
+    }
+
+    /* Animatsiyalar */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stats-container, .orders-container {
+        animation: fadeIn 0.6s ease forwards;
+    }
+
+    .stat-card {
+        animation: fadeIn 0.6s ease forwards;
+    }
+
+    .stat-card:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .stat-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .stat-card:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .stat-card:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    tbody tr {
+        animation: fadeIn 0.5s ease forwards;
+    }
+
+</style>
 <body>
 
 <div class="header">

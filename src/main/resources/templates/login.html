@@ -5,273 +5,280 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apteka Admin Tizimi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Asosiy stil va o'zgaruvchilar */
-        :root {
-            --primary: #2c6bac;
-            --primary-light: #5a8ec9;
-            --primary-dark: #1a4f8b;
-            --secondary: #4CAF50;
-            --accent: #ff6b6b;
-            --background: #f8fafc;
-            --surface: #ffffff;
-            --text-primary: #2d3748;
-            --text-secondary: #718096;
-            --border: #e2e8f0;
-            --error: #e53e3e;
-            --success: #38a169;
-            --border-radius: 12px;
-            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.05);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+</head>
+<style>
+    /* Asosiy stil va o'zgaruvchilar */
+    :root {
+        --primary: #2c6bac;
+        --primary-light: #5a8ec9;
+        --primary-dark: #1a4f8b;
+        --secondary: #4CAF50;
+        --accent: #ff6b6b;
+        --background: #f8fafc;
+        --surface: #ffffff;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --border: #e2e8f0;
+        --error: #e53e3e;
+        --success: #38a169;
+        --border-radius: 12px;
+        --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        /* Umumiy stil */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    /* Umumiy stil */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, var(--background) 0%, #edf2f7 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--text-primary);
-            line-height: 1.6;
-            padding: 20px;
-        }
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: linear-gradient(135deg, var(--background) 0%, #edf2f7 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--text-primary);
+        line-height: 1.6;
+        padding: 20px;
+    }
 
-        /* Login konteyneri */
+    /* Login konteyneri */
+    .login-container {
+        background: var(--surface);
+        width: 100%;
+        max-width: 440px;
+        padding: 40px 35px;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(to right, var(--primary-light), var(--primary));
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    .login-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Logo va sarlavha */
+    .logo {
+        margin-bottom: 25px;
+        color: var(--primary);
+        font-size: 32px;
+    }
+
+    h2 {
+        color: var(--primary);
+        margin-bottom: 25px;
+        font-size: 28px;
+        font-weight: 700;
+        position: relative;
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        font-size: 16px;
+    }
+
+    /* Forma elementlari */
+    .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 18px;
+    }
+
+    input {
+        width: 100%;
+        padding: 16px 16px 16px 50px;
+        border: 2px solid var(--border);
+        border-radius: var(--border-radius);
+        font-size: 16px;
+        transition: var(--transition);
+        outline: none;
+        background: #fafafa;
+    }
+
+    input:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(44, 107, 172, 0.15);
+        background: #fff;
+    }
+
+    input::placeholder {
+        color: #a0aec0;
+    }
+
+    /* Tugma */
+    button {
+        background: linear-gradient(to right, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: var(--border-radius);
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        width: 100%;
+        margin-top: 10px;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    button::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+        transform: rotate(30deg);
+        transition: var(--transition);
+    }
+
+    button:hover {
+        background: linear-gradient(to right, var(--primary-dark), var(--primary));
+        transform: translateY(-2px);
+        box-shadow: 0 7px 14px rgba(44, 107, 172, 0.25);
+    }
+
+    button:hover::after {
+        transform: rotate(30deg) translate(10%, 10%);
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    /* Xabarlar */
+    .error-message, .logout-message {
+        padding: 14px;
+        border-radius: var(--border-radius);
+        margin-bottom: 25px;
+        font-weight: 500;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .error-message {
+        background-color: #fed7d7;
+        color: var(--error);
+        border: 1px solid #feb2b2;
+    }
+
+    .logout-message {
+        background-color: #c6f6d5;
+        color: var(--success);
+        border: 1px solid #9ae6b4;
+    }
+
+    /* Footer */
+    .login-footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+
+    /* Responsive dizayn */
+    @media (max-width: 480px) {
         .login-container {
-            background: var(--surface);
-            width: 100%;
-            max-width: 440px;
-            padding: 40px 35px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            text-align: center;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(to right, var(--primary-light), var(--primary));
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
-        }
-
-        .login-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Logo va sarlavha */
-        .logo {
-            margin-bottom: 25px;
-            color: var(--primary);
-            font-size: 32px;
+            padding: 30px 25px;
         }
 
         h2 {
-            color: var(--primary);
-            margin-bottom: 25px;
-            font-size: 28px;
-            font-weight: 700;
-            position: relative;
+            font-size: 24px;
         }
 
-        .subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 30px;
-            font-size: 16px;
+        input, button {
+            padding: 14px 14px 14px 45px;
         }
+    }
 
-        /* Forma elementlari */
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
+    /* Animatsiyalar */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
         }
-
-        .input-with-icon {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-size: 18px;
-        }
-
-        input {
-            width: 100%;
-            padding: 16px 16px 16px 50px;
-            border: 2px solid var(--border);
-            border-radius: var(--border-radius);
-            font-size: 16px;
-            transition: var(--transition);
-            outline: none;
-            background: #fafafa;
-        }
-
-        input:focus {
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(44, 107, 172, 0.15);
-            background: #fff;
-        }
-
-        input::placeholder {
-            color: #a0aec0;
-        }
-
-        /* Tugma */
-        button {
-            background: linear-gradient(to right, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: var(--border-radius);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            width: 100%;
-            margin-top: 10px;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        button::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0));
-            transform: rotate(30deg);
-            transition: var(--transition);
-        }
-
-        button:hover {
-            background: linear-gradient(to right, var(--primary-dark), var(--primary));
-            transform: translateY(-2px);
-            box-shadow: 0 7px 14px rgba(44, 107, 172, 0.25);
-        }
-
-        button:hover::after {
-            transform: rotate(30deg) translate(10%, 10%);
-        }
-
-        button:active {
+        to {
+            opacity: 1;
             transform: translateY(0);
         }
+    }
 
-        /* Xabarlar */
-        .error-message, .logout-message {
-            padding: 14px;
-            border-radius: var(--border-radius);
-            margin-bottom: 25px;
-            font-weight: 500;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
         }
-
-        .error-message {
-            background-color: #fed7d7;
-            color: var(--error);
-            border: 1px solid #feb2b2;
+        50% {
+            transform: scale(1.05);
         }
-
-        .logout-message {
-            background-color: #c6f6d5;
-            color: var(--success);
-            border: 1px solid #9ae6b4;
+        100% {
+            transform: scale(1);
         }
+    }
 
-        /* Footer */
-        .login-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
+    .login-container {
+        animation: fadeIn 0.6s ease forwards;
+    }
 
-        /* Responsive dizayn */
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 25px;
-            }
+    .form-group {
+        animation: fadeIn 0.8s ease forwards;
+    }
 
-            h2 {
-                font-size: 24px;
-            }
+    .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+    }
 
-            input, button {
-                padding: 14px 14px 14px 45px;
-            }
-        }
+    .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+    }
 
-        /* Animatsiyalar */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    button {
+        animation: fadeIn 0.8s ease forwards;
+        animation-delay: 0.3s;
+    }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+    .message {
+        animation: pulse 0.5s ease;
+    }
 
-        .login-container {
-            animation: fadeIn 0.6s ease forwards;
-        }
-
-        .form-group {
-            animation: fadeIn 0.8s ease forwards;
-        }
-
-        .form-group:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .form-group:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        button {
-            animation: fadeIn 0.8s ease forwards;
-            animation-delay: 0.3s;
-        }
-
-        .message {
-            animation: pulse 0.5s ease;
-        }
-    </style>
-</head>
+</style>
 <body>
 <div class="login-container">
     <div class="logo">

@@ -84,4 +84,19 @@ public class OrderService {
     public List<Order> findAll() {
         return orderRepository.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public Object countNewOrders() {
+        return orderRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public double successRate() {
+        long total = orderRepository.count();
+        if (total == 0) return 0;
+
+        long delivered = orderRepository.countByStatus(Order.Status.DELIVERED);
+        return (delivered * 100.0) / total;
+    }
+
 }

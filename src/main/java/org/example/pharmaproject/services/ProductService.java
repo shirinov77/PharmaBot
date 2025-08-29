@@ -53,4 +53,14 @@ public class ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Mahsulot topilmadi: " + id));
         productRepository.delete(product);
     }
+
+    @Transactional(readOnly = true)
+    public Object countOutOfStock() {
+        return productRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public Object countProducts() {
+        return productRepository.count();
+    }
 }

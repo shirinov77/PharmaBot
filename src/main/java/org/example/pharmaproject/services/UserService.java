@@ -111,4 +111,9 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    @Transactional(readOnly = true)
+    public long countUsers() {
+        return userRepository.count();
+    }
+
 }
