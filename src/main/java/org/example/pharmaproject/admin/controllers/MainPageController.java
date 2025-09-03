@@ -6,8 +6,10 @@ import org.example.pharmaproject.services.ProductService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
+@RequestMapping("/admin")
 public class MainPageController {
 
     private final UserService userService;
@@ -20,7 +22,8 @@ public class MainPageController {
         this.productService = productService;
     }
 
-    @GetMapping("/admin/main")
+    // Asosiy sahifa
+    @GetMapping("/main")
     public String mainPage(Model model) {
         model.addAttribute("totalUsers", userService.countUsers());
         model.addAttribute("totalOrders", orderService.countOrders());
@@ -31,5 +34,25 @@ public class MainPageController {
         model.addAttribute("outOfStock", productService.countOutOfStock());
 
         return "main";
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboardPage() {
+        return "dashboard";
+    }
+
+    @GetMapping("/users")
+    public String usersPage() {
+        return "users/list";
+    }
+
+    @GetMapping("/products")
+    public String productsPage() {
+        return "products/list";
+    }
+
+    @GetMapping("/orders")
+    public String ordersPage() {
+        return "orders/list";
     }
 }
