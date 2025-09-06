@@ -18,7 +18,6 @@ public class DashboardController {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
 
-    @GetMapping("/dashboard")
     public String dashboard(Model model) {
         long totalUsers = userRepository.count();
         long totalOrders = orderRepository.count();
