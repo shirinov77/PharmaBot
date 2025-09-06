@@ -1,19 +1,18 @@
 package org.example.pharmaproject.services;
 
+import lombok.RequiredArgsConstructor;
 import org.example.pharmaproject.entities.Category;
 import org.example.pharmaproject.repository.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public Category save(Category category) {
@@ -24,8 +23,9 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Category> findById(Long id) {
-        return categoryRepository.findById(id);
+    public Category findById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Kategoriya topilmadi: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -35,8 +35,7 @@ public class CategoryService {
 
     @Transactional
     public void delete(Long id) {
-        Category category = findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Kategoriya topilmadi: " + id));
+        Category category = findById(id);
         if (!category.getProducts().isEmpty()) {
             throw new IllegalStateException("Kategoriyada mahsulotlar bor, o‘chirib bo‘lmaydi");
         }

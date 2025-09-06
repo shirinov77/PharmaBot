@@ -1,5 +1,7 @@
 package org.example.pharmaproject.bot.handlers;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.pharmaproject.bot.utils.BotUtils;
 import org.example.pharmaproject.entities.Category;
 import org.example.pharmaproject.entities.Product;
@@ -7,7 +9,6 @@ import org.example.pharmaproject.entities.User;
 import org.example.pharmaproject.services.CategoryService;
 import org.example.pharmaproject.services.ProductService;
 import org.example.pharmaproject.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,22 +17,15 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class MenuHandler {
-    private static final Logger LOGGER = Logger.getLogger(MenuHandler.class.getName());
 
     private final CategoryService categoryService;
     private final UserService userService;
     private final ProductService productService;
-
-    @Autowired
-    public MenuHandler(CategoryService categoryService, UserService userService, ProductService productService) {
-        this.categoryService = categoryService;
-        this.userService = userService;
-        this.productService = productService;
-    }
 
     public BotApiMethod<?> handleMenu(Message message, User user) {
         String chatId = message.getChatId().toString();

@@ -1,13 +1,16 @@
 package org.example.pharmaproject.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import jakarta.validation.constraints.Positive;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "basket_items")
-@Data
+@Table(name = "basket_items", indexes = @Index(columnList = "basket_id,product_id"))
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class BasketItem {
 
     @Id
@@ -22,7 +25,6 @@ public class BasketItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Positive(message = "Miqdor musbat bo‘lishi kerak")
     private int quantity;
-
-    private int price;
 }

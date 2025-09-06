@@ -1,9 +1,10 @@
 package org.example.pharmaproject.bot.handlers;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.pharmaproject.bot.utils.BotUtils;
 import org.example.pharmaproject.entities.User;
 import org.example.pharmaproject.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,20 +14,12 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class StartHandler {
 
     private final UserService userService;
 
-    @Autowired
-    public StartHandler(UserService userService) {
-        this.userService = userService;
-    }
-
-    /**
-     * /start komanda ishlaganda
-     * - Yangi foydalanuvchi → til tanlash
-     * - Mavjud foydalanuvchi → asosiy menyu
-     */
     public BotApiMethod<?> handleStart(Message message) {
         String chatId = message.getChatId().toString();
         Long telegramId = message.getFrom().getId();
@@ -39,11 +32,11 @@ public class StartHandler {
             newUser.setName(message.getFrom().getFirstName() != null
                     ? message.getFrom().getFirstName()
                     : "Foydalanuvchi");
-            newUser.setLanguage(null); // til tanlanmagan
+            newUser.setLanguage(null);
             userService.save(newUser);
 
             SendMessage response = new SendMessage(chatId,
-                    BotUtils.getLocalizedMessage("uz", "select_language")); // default matn uz
+                    BotUtils.getLocalizedMessage("uz", "select_language"));
             response.setReplyMarkup(BotUtils.createLanguageInlineKeyboard());
             return response;
         }
@@ -55,9 +48,6 @@ public class StartHandler {
         return response;
     }
 
-    /**
-     * Til tanlash komandasini yuborish yoki /language komanda
-     */
     public BotApiMethod<?> handleLanguageSelection(Message message, User user) {
         String chatId = message.getChatId().toString();
         SendMessage response = new SendMessage(chatId,
@@ -66,17 +56,12 @@ public class StartHandler {
         return response;
     }
 
-    /**
-     * Foydalanuvchi tilni tanlaganda (callback)
-     * Tilni yangilaydi va asosiy menyuni yuboradi
-     */
     public BotApiMethod<?> handleLanguageChange(CallbackQuery query, String callbackData) {
         String chatId = query.getMessage().getChatId().toString();
 
         User user = userService.findByTelegramId(query.getFrom().getId())
                 .orElseThrow(() -> new RuntimeException("Foydalanuvchi topilmadi"));
 
-        // callbackData "lang_uz", "lang_ru", "lang_en"
         String lang = callbackData.replace("lang_", "");
 
         user.setLanguage(lang);
