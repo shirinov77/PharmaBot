@@ -8,19 +8,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import lombok.RequiredArgsConstructor;
+
 @Controller
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class MainPageController {
 
     private final UserService userService;
     private final OrderService orderService;
     private final ProductService productService;
-
-    public MainPageController(UserService userService, OrderService orderService, ProductService productService) {
-        this.userService = userService;
-        this.orderService = orderService;
-        this.productService = productService;
-    }
 
     // Asosiy sahifa
     @GetMapping("/main")

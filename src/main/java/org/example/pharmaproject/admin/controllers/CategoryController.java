@@ -6,8 +6,10 @@ import org.example.pharmaproject.services.CategoryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("/admin/categories")
@@ -33,50 +35,54 @@ public class CategoryController {
 
     // 3️⃣ Yangi kategoriya saqlash
     @PostMapping("/create")
-    public String createCategory(@ModelAttribute Category category, Model model) {
+    public String createCategory(@ModelAttribute Category category, RedirectAttributes redirectAttributes) {
         try {
             categoryService.save(category);
             return "redirect:/admin/categories";
         } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "categories/create";
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/admin/categories/create";
         }
     }
 
     // 4️⃣ Kategoriyani tahrirlash formasi
     @GetMapping("/edit/{id}")
-    public String editForm(@PathVariable Long id, Model model) {
-        Category category = categoryService.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Kategoriya topilmadi: " + id));
-        model.addAttribute("category", category);
-        return "categories/edit";
+    public String editForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            Category category = categoryService.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Kategoriya topilmadi: " + id));
+            model.addAttribute("category", category);
+            return "categories/edit";
+        } catch (NoSuchElementException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/admin/categories";
+        }
     }
 
     // 5️⃣ Kategoriyani yangilash
     @PostMapping("/edit/{id}")
-    public String updateCategory(@PathVariable Long id, @ModelAttribute Category category, Model model) {
-        Category existingCategory = categoryService.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Kategoriya topilmadi: " + id));
-        existingCategory.setName(category.getName());
-
+    public String updateCategory(@PathVariable Long id, @ModelAttribute Category category, RedirectAttributes redirectAttributes) {
         try {
+            Category existingCategory = categoryService.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Kategoriya topilmadi: " + id));
+            existingCategory.setName(category.getName());
             categoryService.save(existingCategory);
             return "redirect:/admin/categories";
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "categories/edit";
+        } catch (NoSuchElementException | IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/admin/categories/edit/" + id;
         }
     }
 
     // 6️⃣ Kategoriyani o‘chirish
     @PostMapping("/delete/{id}")
-    public String deleteCategory(@PathVariable Long id, Model model) {
+    public String deleteCategory(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             categoryService.delete(id);
             return "redirect:/admin/categories";
         } catch (IllegalStateException | IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "categories/list";
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/admin/categories";
         }
     }
 }
