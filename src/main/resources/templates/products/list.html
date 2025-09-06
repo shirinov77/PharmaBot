@@ -1,10 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Mahsulotlar</title>
 </head>
 <body>
+<h1>Mahsulotlar ro‘yxati</h1>
 
+<a th:href="@{/admin/products/create}">➕ Yangi mahsulot qo‘shish</a>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nomi</th>
+        <th>Narxi</th>
+        <th>Miqdori</th>
+        <th>Kategoriya</th>
+        <th>Amallar</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="product : ${products}">
+        <td th:text="${product.id}"></td>
+        <td th:text="${product.name}"></td>
+        <td th:text="${product.price}"></td>
+        <td th:text="${product.quantity}"></td>
+        <td th:text="${product.category.name}"></td>
+        <td>
+            <a th:href="@{/admin/products/edit/{id}(id=${product.id})}">✏️ Tahrirlash</a> |
+            <a th:href="@{/admin/products/delete/{id}(id=${product.id})}">🗑️ O‘chirish</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a th:href="@{/admin/main}">⬅️ Asosiy sahifaga qaytish</a>
 </body>
 </html>

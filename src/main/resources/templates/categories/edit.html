@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Kategoriya tahrirlash</title>
 </head>
 <body>
-
+<h1>Kategoriya tahrirlash</h1>
+<form th:action="@{/admin/categories/update}" method="post" th:object="${category}">
+    <input type="hidden" th:field="*{id}">
+    <label>Nomi:</label>
+    <input type="text" th:field="*{name}">
+    <button type="submit">Yangilash</button>
+</form>
+<a th:href="@{/admin/categories}">Orqaga</a>
 </body>
 </html>

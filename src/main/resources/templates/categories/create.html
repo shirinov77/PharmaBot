@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Kategoriya yaratish</title>
 </head>
 <body>
-
+<h1>Yangi Kategoriya qo‘shish</h1>
+<form th:action="@{/admin/categories/create}" method="post">
+    <label>Nomi:</label>
+    <input type="text" name="name" required>
+    <button type="submit">Saqlash</button>
+</form>
+<a th:href="@{/admin/categories}">Orqaga</a>
 </body>
 </html>

@@ -1,21 +1,49 @@
 <!DOCTYPE html>
-<html lang="uz" xmlns:th="http://www.thymeleaf.org">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Main Page</title>
+    <title>Premium Admin Boshqaruv Paneli</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #2c6bac;
-            --primary-dark: #1a4f8b;
-            --secondary: #4CAF50;
-            --accent: #ff6b6b;
-            --background: #f5f7fa;
-            --surface: #ffffff;
+            --primary: #4a6cf7;
+            --primary-light: #6a88ff;
+            --primary-dark: #3b5be3;
+            --secondary: #788190;
+            --success: #22c55e;
+            --info: #3b82f6;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #2d3e56;
+            --header-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
             --border-radius: 12px;
-            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.05);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --border-radius-sm: 8px;
+            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --box-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary: #5f7fff;
+            --primary-light: #7d98ff;
+            --primary-dark: #4a6cf7;
+            --secondary: #94a3b8;
+            --header-bg: #1e293b;
+            --card-bg: #334155;
+            --text-dark: #f1f5f9;
+            --text-muted: #cbd5e1;
+            --bg-light: #0f172a;
+            --border-color: #334155;
         }
 
         * {
@@ -25,110 +53,843 @@
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--background);
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
             min-height: 100vh;
-            padding: 40px 20px;
+            display: flex;
+            overflow-x: hidden;
+            transition: var(--transition);
         }
 
-        h1 {
-            color: var(--primary);
-            margin-bottom: 40px;
-            font-size: 2.5rem;
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            color: var(--text-light);
+            overflow-y: auto;
+            z-index: 1000;
+            transition: var(--transition);
+            padding: 1.5rem 0;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .sidebar-header span,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .nav-item .badge {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.875rem;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-header i {
+            color: var(--primary-light);
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 1.25rem;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            margin: 0.25rem 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: var(--text-light);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--text-light);
+        }
+
+        .nav-item i {
+            width: 1.25rem;
             text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            transition: var(--transition);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 2rem;
+            transition: var(--transition);
+        }
+
+        .main-content.expanded {
+            margin-left: 80px;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--header-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .page-title h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .page-title p {
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            width: 250px;
+            transition: var(--transition);
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .notification-bell {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .notification-bell:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-menu {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-role {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: var(--transition);
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--box-shadow-hover);
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius-sm);
+            color: white;
+            font-size: 1.25rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .stat-content p {
+            margin-top: 0.25rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .stat-1 .stat-icon {
+            background: var(--primary);
+        }
+
+        .stat-2 .stat-icon {
+            background: var(--success);
+        }
+
+        .stat-3 .stat-icon {
+            background: var(--info);
+        }
+
+        .stat-4 .stat-icon {
+            background: var(--warning);
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .chart-container:hover {
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        /* Menu Section */
+        .menu-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
         }
 
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 25px;
-            width: 100%;
-            max-width: 1200px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
         }
 
         .menu-card {
-            background-color: var(--surface);
+            background: var(--card-bg);
             border-radius: var(--border-radius);
+            padding: 1.5rem;
             box-shadow: var(--box-shadow);
-            padding: 30px 20px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
             transition: var(--transition);
-            cursor: pointer;
             text-decoration: none;
-            color: #fff;
-            font-weight: 600;
-            font-size: 1.1rem;
+            color: inherit;
+            border-left: 4px solid var(--primary);
         }
-
-        .menu-card i {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-
-        .menu-card.dashboard { background: linear-gradient(135deg, #2c6bac, #1a4f8b); }
-        .menu-card.users { background: linear-gradient(135deg, #4CAF50, #3d8b40); }
-        .menu-card.products { background: linear-gradient(135deg, #ff6b6b, #ff3b3b); }
-        .menu-card.orders { background: linear-gradient(135deg, #ffc107, #ff9800); }
-        .menu-card.logout { background: linear-gradient(135deg, #555, #222); }
 
         .menu-card:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--box-shadow-hover);
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .menu-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius-sm);
+            color: white;
+            font-size: 1.25rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--primary);
+        }
+
+        .menu-card-content h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .menu-card-content p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .dashboard .menu-card-icon {
+            background: var(--primary);
+        }
+
+        .users .menu-card-icon {
+            background: var(--success);
+        }
+
+        .products .menu-card-icon {
+            background: var(--info);
+        }
+
+        .orders .menu-card-icon {
+            background: var(--warning);
+        }
+
+        /* Mobile menu toggle */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-sm);
+            background: var(--primary);
+            color: #fff;
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: -12px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            z-index: 1001;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .search-box input {
+                width: 200px;
+            }
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 30px 10px;
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
             }
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 30px;
+
+            .menu-grid {
+                grid-template-columns: 1fr;
             }
-            .menu-card {
-                padding: 25px 15px;
-                font-size: 1rem;
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
             }
-            .menu-card i {
-                font-size: 2rem;
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .search-box {
+                flex-grow: 1;
+                margin-right: 1rem;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-info {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-
-<h1>Admin Main Menu</h1>
-
-<div class="menu-grid">
-    <a th:href="@{/admin/dashboard}" class="menu-card dashboard">
-        <i class="fas fa-tachometer-alt"></i>
-        Dashboard
-    </a>
-    <a th:href="@{/admin/users}" class="menu-card users">
-        <i class="fas fa-users"></i>
-        Foydalanuvchilar
-    </a>
-    <a th:href="@{/admin/products}" class="menu-card products">
-        <i class="fas fa-pills"></i>
-        Mahsulotlar
-    </a>
-    <a th:href="@{/admin/orders}" class="menu-card orders">
-        <i class="fas fa-shopping-cart"></i>
-        Buyurtmalar
-    </a>
-    <a th:href="@{/logout}" class="menu-card logout">
-        <i class="fas fa-sign-out-alt"></i>
-        Logout
-    </a>
+<div class="menu-toggle" id="menuToggle">
+    <i class="fas fa-bars"></i>
 </div>
 
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+    <div class="sidebar-header">
+        <i class="fas fa-shield-alt"></i>
+        <span>Admin Panel</span>
+    </div>
+    <div class="sidebar-nav">
+        <a href="/templates/dashboard.html" class="nav-item active">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/templates/users/list.html" class="nav-item">
+            <i class="fas fa-users"></i>
+            <span>Foydalanuvchilar</span>
+            <span class="badge" th:text="${totalUsers}">3</span>
+        </a>
+        <a href="/templates/products/list.html" class="nav-item">
+            <i class="fas fa-pills"></i>
+            <span>Mahsulotlar</span>
+        </a>
+        <a href="/templates/orders/list.html" class="nav-item">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Buyurtmalar</span>
+            <span class="badge" th:text="${newOrders}">5</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Chiqish</span>
+        </a>
+    </div>
+</nav>
+
+<main class="main-content" id="mainContent">
+    <header class="page-header">
+        <div class="page-title">
+            <h1>Admin Boshqaruv Paneli</h1>
+            <p>Tizimning barcha bo'limlarini boshqarish va monitoring qilish</p>
+        </div>
+        <div class="header-actions">
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Qidirish...">
+            </div>
+            <div class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name">Admin Foydalanuvchi</div>
+                    <div class="user-role">Super Administrator</div>
+                </div>
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="stats-grid">
+        <article class="stat-card stat-1">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="userCount" th:text="${totalUsers}">1,248</h3>
+                <p>Faol Foydalanuvchilar</p>
+            </div>
+        </article>
+
+        <article class="stat-card stat-2">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="orderCount" th:text="${newOrders}">564</h3>
+                <p>Yangi Buyurtmalar</p>
+            </div>
+        </article>
+
+        <article class="stat-card stat-3">
+            <div class="stat-icon">
+                <i class="fas fa-pills"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="productCount" th:text="${totalProducts}">856</h3>
+                <p>Jami Mahsulotlar</p>
+            </div>
+        </article>
+
+        <article class="stat-card stat-4">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="successRate" th:text="${successRate} + '%'">92%</h3>
+                <p>Muvaffaqiyat Darajasi</p>
+            </div>
+        </article>
+    </section>
+
+    <section class="charts-section">
+        <div class="chart-container">
+            <h3 class="chart-title">Foydalanuvchilar statistikasi</h3>
+            <canvas id="userChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3 class="chart-title">Buyurtmalar holati</h3>
+            <canvas id="orderChart"></canvas>
+        </div>
+    </section>
+</main>
+
+<script>
+    // Mobile menu toggle
+    document.getElementById('menuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // Sidebar toggle
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('mainContent').classList.toggle('expanded');
+
+        const icon = document.querySelector('#sidebarToggle i');
+        if (document.getElementById('sidebar').classList.contains('collapsed')) {
+            icon.classList.remove('fa-chevron-left');
+            icon.classList.add('fa-chevron-right');
+        } else {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-left');
+        }
+    });
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+
+        const icon = document.querySelector('#themeToggle i');
+        if (document.body.classList.contains('dark-theme')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+    // Check saved theme
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+        document.querySelector('#themeToggle i').classList.remove('fa-moon');
+        document.querySelector('#themeToggle i').classList.add('fa-sun');
+    }
+
+    // Close sidebar on outside click for mobile
+    document.addEventListener('click', (e) => {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        if (
+            window.innerWidth <= 992 &&
+            !sidebar.contains(e.target) &&
+            !menuToggle.contains(e.target) &&
+            sidebar.classList.contains('active')
+        ) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // Animated counter for stats
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            element.textContent = value.toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Initialize counters
+    document.addEventListener('DOMContentLoaded', () => {
+        animateValue(document.getElementById('userCount'), 0, 1248, 2000);
+        animateValue(document.getElementById('orderCount'), 0, 564, 2000);
+        animateValue(document.getElementById('productCount'), 0, 856, 2000);
+
+        // Animate percentage
+        const successElement = document.getElementById('successRate');
+        let current = 0;
+        const target = 92;
+        const interval = setInterval(() => {
+            if (current >= target) {
+                clearInterval(interval);
+            } else {
+                current++;
+                successElement.textContent = current + '%';
+            }
+        }, 2000 / target);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // User statistics chart
+        const userCtx = document.getElementById('userChart').getContext('2d');
+        new Chart(userCtx, {
+            type: 'line',
+            data: {
+                labels: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul'],
+                datasets: [{
+                    label: 'Foydalanuvchilar soni',
+                    data: [200, 350, 500, 650, 800, 950, 1248],
+                    borderColor: 'rgba(74, 108, 247, 1)',
+                    backgroundColor: 'rgba(74, 108, 247, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(74, 108, 247, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {display: true, labels: {color: 'var(--text-dark)'}}
+                },
+                scales: {
+                    x: {ticks: {color: 'var(--text-dark)'}},
+                    y: {ticks: {color: 'var(--text-dark)'}, beginAtZero: true}
+                }
+            }
+        });
+
+        // Orders chart
+        const orderCtx = document.getElementById('orderChart').getContext('2d');
+        new Chart(orderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Yangi', 'Jarayonda', 'Yetkazilgan', 'Bekor qilingan'],
+                datasets: [{
+                    data: [150, 200, 180, 34],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {color: 'var(--text-dark)'}
+                    }
+                }
+            }
+        });
+    });
+</script>
 </body>
 </html>

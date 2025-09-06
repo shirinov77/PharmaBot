@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Yangi mahsulot qo‘shish</title>
 </head>
 <body>
+<h1>Yangi mahsulot qo‘shish</h1>
 
+<form th:action="@{/admin/products/create}" method="post" th:object="${product}">
+    <label>Nomi:</label>
+    <input type="text" th:field="*{name}" required><br><br>
+
+    <label>Narxi:</label>
+    <input type="number" th:field="*{price}" step="0.01" required><br><br>
+
+    <label>Miqdori:</label>
+    <input type="number" th:field="*{quantity}" required><br><br>
+
+    <label>Kategoriya:</label>
+    <select th:field="*{category.id}">
+        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+    </select><br><br>
+
+    <button type="submit">💾 Saqlash</button>
+</form>
+
+<a th:href="@{/admin/products}">⬅️ Mahsulotlar ro‘yxatiga qaytish</a>
 </body>
 </html>

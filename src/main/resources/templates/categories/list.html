@@ -1,10 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Kategoriyalar</title>
 </head>
 <body>
-
+<h1>Kategoriyalar ro‘yxati</h1>
+<a th:href="@{/admin/categories/create}">➕ Yangi qo‘shish</a>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Nomi</th>
+        <th>Amallar</th>
+    </tr>
+    <tr th:each="cat : ${categories}">
+        <td th:text="${cat.id}"></td>
+        <td th:text="${cat.name}"></td>
+        <td>
+            <a th:href="@{/admin/categories/edit/{id}(id=${cat.id})}">✏️</a>
+            <a th:href="@{/admin/categories/delete/{id}(id=${cat.id})}">🗑️</a>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
