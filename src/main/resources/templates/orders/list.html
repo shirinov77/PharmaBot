@@ -1,10 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Buyurtmalar</title>
 </head>
 <body>
+<h1>Buyurtmalar ro‘yxati</h1>
 
+<table border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Foydalanuvchi</th>
+        <th>Sana</th>
+        <th>Status</th>
+        <th>Jami summa</th>
+        <th>Amallar</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="order : ${orders}">
+        <td th:text="${order.id}"></td>
+        <td th:text="${order.user.fullName}"></td>
+        <td th:text="${#dates.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+        <td th:text="${order.status}"></td>
+        <td th:text="${order.totalAmount}"></td>
+        <td>
+            <a th:href="@{/admin/orders/details/{id}(id=${order.id})}">📄 Tafsilotlar</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a th:href="@{/admin/main}">⬅️ Asosiy sahifaga qaytish</a>
 </body>
 </html>

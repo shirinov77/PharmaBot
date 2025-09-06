@@ -1,10 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Buyurtma tafsilotlari</title>
 </head>
 <body>
+<h1>Buyurtma tafsilotlari</h1>
 
+<div>
+    <p><strong>ID:</strong> <span th:text="${order.id}"></span></p>
+    <p><strong>Foydalanuvchi:</strong> <span th:text="${order.user.fullName}"></span></p>
+    <p><strong>Sana:</strong> <span th:text="${#dates.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></span></p>
+    <p><strong>Status:</strong> <span th:text="${order.status}"></span></p>
+    <p><strong>Jami summa:</strong> <span th:text="${order.totalAmount}"></span></p>
+</div>
+
+<h2>Buyurtmadagi mahsulotlar</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Mahsulot</th>
+        <th>Soni</th>
+        <th>Narxi</th>
+        <th>Umumiy</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${order.items}">
+        <td th:text="${item.product.name}"></td>
+        <td th:text="${item.quantity}"></td>
+        <td th:text="${item.product.price}"></td>
+        <td th:text="${item.totalPrice}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<a th:href="@{/admin/orders}">⬅️ Buyurtmalar ro‘yxatiga qaytish</a>
 </body>
 </html>

@@ -1,41 +1,49 @@
 <!DOCTYPE html>
-<html lang="uz" xmlns:th="http://www.thymeleaf.org">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Boshqaruv Paneli | Premium</title>
+    <title>Premium Admin Boshqaruv Paneli</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary-color: #4361ee;
-            --primary-light: #4895ef;
-            --primary-dark: #3a0ca3;
-            --secondary: #7209b7;
-            --success: #4cc9f0;
-            --info: #4895ef;
-            --warning: #f72585;
-            --danger: #e63946;
-            --sidebar-bg: #1f2a40;
-            --sidebar-hover: #2a3a56;
-            --text-dark: #2b2d42;
-            --text-light: #FFFFFF;
-            --bg-light: #f8f9fa;
-            --bg-gray: #e9ecef;
-            --gray-100: #f8f9fc;
-            --gray-200: #e9ecef;
-            --gray-300: #dee2e6;
-            --gray-400: #ced4da;
-            --gray-500: #adb5bd;
-            --gray-600: #6c757d;
-            --gray-700: #495057;
-            --gray-800: #343a40;
-            --gray-900: #212529;
+            --primary: #4a6cf7;
+            --primary-light: #6a88ff;
+            --primary-dark: #3b5be3;
+            --secondary: #788190;
+            --success: #22c55e;
+            --info: #3b82f6;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #2d3e56;
+            --header-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #ffffff;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
             --border-radius: 12px;
             --border-radius-sm: 8px;
-            --box-shadow: 0 5px 20px rgba(67, 97, 238, 0.15);
-            --box-shadow-hover: 0 8px 25px rgba(67, 97, 238, 0.2);
+            --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --box-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary: #5f7fff;
+            --primary-light: #7d98ff;
+            --primary-dark: #4a6cf7;
+            --secondary: #94a3b8;
+            --header-bg: #1e293b;
+            --card-bg: #334155;
+            --text-dark: #f1f5f9;
+            --text-muted: #cbd5e1;
+            --bg-light: #0f172a;
+            --border-color: #334155;
         }
 
         * {
@@ -45,151 +53,117 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f3f6fb;
-            display: flex;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
             color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
             overflow-x: hidden;
-        }
-
-        /* Animated background elements */
-        .animated-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .bg-circle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(67, 97, 238, 0.05);
-            animation: float 15s infinite linear;
-        }
-
-        .bg-circle:nth-child(1) {
-            width: 300px;
-            height: 300px;
-            top: -100px;
-            left: -100px;
-            animation-delay: 0s;
-            animation-duration: 25s;
-        }
-
-        .bg-circle:nth-child(2) {
-            width: 200px;
-            height: 200px;
-            top: 50%;
-            right: -50px;
-            animation-delay: 2s;
-            animation-duration: 20s;
-        }
-
-        .bg-circle:nth-child(3) {
-            width: 250px;
-            height: 250px;
-            bottom: -100px;
-            left: 20%;
-            animation-delay: 5s;
-            animation-duration: 30s;
+            transition: var(--transition);
         }
 
         /* Sidebar */
         .sidebar {
-            width: 260px;
-            background: var(--sidebar-bg);
-            color: white;
-            height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            color: var(--text-light);
             overflow-y: auto;
-            transition: var(--transition);
             z-index: 1000;
-            transform: translateX(0);
+            transition: var(--transition);
+            padding: 1.5rem 0;
+            box-shadow: var(--box-shadow);
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .sidebar-header span,
+        .sidebar.collapsed .nav-item span,
+        .sidebar.collapsed .nav-item .badge {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.875rem;
         }
 
         .sidebar-header {
-            padding: 20px;
-            text-align: center;
+            padding: 0 1.5rem 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            animation: slideInLeft 0.5s ease-out;
-        }
-
-        .sidebar-header .logo {
-            font-size: 22px;
-            font-weight: bold;
-            color: #fff;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            gap: 0.75rem;
         }
 
-        .sidebar-nav {
-            padding: 20px 0;
+        .sidebar-header i {
+            color: var(--primary-light);
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header span {
+            font-weight: 700;
+            font-size: 1.25rem;
+            white-space: nowrap;
+            transition: var(--transition);
         }
 
         .nav-item {
-            padding: 12px 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            color: var(--gray-400);
-            text-decoration: none;
-            transition: var(--transition);
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            margin: 0.25rem 1rem;
             font-weight: 500;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-item:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: var(--border-radius-sm);
             transition: var(--transition);
         }
 
-        .nav-item:hover:before {
-            left: 100%;
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: var(--text-light);
         }
 
-        .nav-item:hover, .nav-item.active {
-            background: var(--sidebar-hover);
-            color: white;
-            border-left: 4px solid var(--primary-color);
-            transform: translateX(5px);
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--text-light);
         }
 
         .nav-item i {
-            width: 20px;
+            width: 1.25rem;
             text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
             transition: var(--transition);
         }
 
-        .nav-item:hover i {
-            transform: scale(1.2);
-        }
-
-        /* Main content */
+        /* Main Content */
         .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 20px;
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 2rem;
             transition: var(--transition);
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out forwards;
-            animation-delay: 0.3s;
+        }
+
+        .main-content.expanded {
+            margin-left: 80px;
         }
 
         /* Header */
@@ -197,379 +171,401 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--gray-200);
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideInDown 0.6s ease-out forwards;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--header-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
         }
 
         .page-title h1 {
-            font-size: 24px;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--text-dark);
         }
 
         .page-title p {
-            color: var(--gray-600);
-            margin-top: 5px;
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            width: 250px;
+            transition: var(--transition);
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .notification-bell {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .notification-bell:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .user-menu {
             display: flex;
+            gap: 0.75rem;
             align-items: center;
-            gap: 15px;
         }
 
         .user-info {
             text-align: right;
         }
 
-        .user-info .user-name {
+        .user-name {
             font-weight: 600;
+            font-size: 0.875rem;
         }
 
-        .user-info .user-role {
-            font-size: 0.85rem;
-            color: var(--gray-600);
+        .user-role {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
 
         .user-avatar {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: var(--primary-color);
+            background: var(--primary);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             color: white;
-            font-size: 1.2rem;
-            transition: var(--transition);
+            font-size: 1rem;
             cursor: pointer;
+            transition: var(--transition);
         }
 
         .user-avatar:hover {
-            transform: rotate(10deg) scale(1.1);
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            transform: scale(1.05);
         }
 
-        /* Stats cards */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .stat-card {
-            background: white;
+            background: var(--card-bg);
+            padding: 1.5rem;
             border-radius: var(--border-radius);
-            padding: 20px;
+            box-shadow: var(--box-shadow);
             display: flex;
             align-items: center;
-            box-shadow: var(--box-shadow);
+            gap: 1rem;
             transition: var(--transition);
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.6s ease-out forwards;
+            border-left: 4px solid var(--primary);
         }
 
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-
         .stat-card:hover {
-            transform: translateY(-10px) scale(1.02);
             box-shadow: var(--box-shadow-hover);
+            transform: translateY(-5px);
         }
 
         .stat-icon {
+            flex-shrink: 0;
             width: 50px;
             height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-right: 15px;
+            border-radius: var(--border-radius-sm);
             color: white;
-            transition: var(--transition);
-        }
-
-        .stat-card:hover .stat-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .stat-1 .stat-icon {
-            background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
-        }
-
-        .stat-2 .stat-icon {
-            background: linear-gradient(45deg, var(--secondary), #8a2be2);
-        }
-
-        .stat-3 .stat-icon {
-            background: linear-gradient(45deg, var(--info), #2f74c4);
-        }
-
-        .stat-4 .stat-icon {
-            background: linear-gradient(45deg, var(--warning), #c51162);
+            font-size: 1.25rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .stat-content h3 {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 5px;
-            transition: var(--transition);
-        }
-
-        .stat-card:hover .stat-content h3 {
-            color: var(--primary-color);
+            color: var(--text-dark);
         }
 
         .stat-content p {
-            color: var(--gray-600);
-            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
-        /* Menu cards */
+        .stat-1 .stat-icon {
+            background: var(--primary);
+        }
+
+        .stat-2 .stat-icon {
+            background: var(--success);
+        }
+
+        .stat-3 .stat-icon {
+            background: var(--info);
+        }
+
+        .stat-4 .stat-icon {
+            background: var(--warning);
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .chart-container:hover {
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        /* Menu Section */
         .menu-section {
-            margin-bottom: 30px;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.6s ease-out forwards;
-            animation-delay: 0.5s;
+            margin-bottom: 2rem;
         }
 
         .section-title {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
             color: var(--text-dark);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            gap: 1.5rem;
         }
 
         .menu-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: var(--border-radius);
+            padding: 1.5rem;
             box-shadow: var(--box-shadow);
-            padding: 25px;
             display: flex;
             flex-direction: column;
             transition: var(--transition);
-            cursor: pointer;
             text-decoration: none;
-            color: var(--text-dark);
-            position: relative;
-            overflow: hidden;
-            border-left: 4px solid var(--primary-color);
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        .menu-card:nth-child(1) { animation: fadeInUp 0.6s ease-out 0.6s forwards; }
-        .menu-card:nth-child(2) { animation: fadeInUp 0.6s ease-out 0.7s forwards; }
-        .menu-card:nth-child(3) { animation: fadeInUp 0.6s ease-out 0.8s forwards; }
-        .menu-card:nth-child(4) { animation: fadeInUp 0.6s ease-out 0.9s forwards; }
-
-        .menu-card:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, rgba(67, 97, 238, 0.05), transparent);
-            transform: translateX(-100%);
-            transition: var(--transition);
-        }
-
-        .menu-card:hover:before {
-            transform: translateX(100%);
+            color: inherit;
+            border-left: 4px solid var(--primary);
         }
 
         .menu-card:hover {
-            transform: translateY(-10px) scale(1.02);
             box-shadow: var(--box-shadow-hover);
+            transform: translateY(-5px);
         }
 
         .card-header {
             display: flex;
+            justify-content: flex-start;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
 
         .menu-card-icon {
             width: 50px;
             height: 50px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
+            border-radius: var(--border-radius-sm);
             color: white;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-card-icon:after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transform: translateX(-100%);
-            transition: var(--transition);
-        }
-
-        .menu-card:hover .menu-card-icon:after {
-            transform: translateX(100%);
-        }
-
-        .dashboard .menu-card-icon {
-            background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
-        }
-
-        .users .menu-card-icon {
-            background: linear-gradient(45deg, var(--secondary), #8a2be2);
-        }
-
-        .products .menu-card-icon {
-            background: linear-gradient(45deg, var(--info), #2f74c4);
-        }
-
-        .orders .menu-card-icon {
-            background: linear-gradient(45deg, var(--warning), #c51162);
-        }
-
-        .settings .menu-card-icon {
-            background: linear-gradient(45deg, var(--gray-600), var(--gray-800));
-        }
-
-        .menu-card:hover .menu-card-icon {
-            transform: scale(1.1) rotate(5deg);
+            font-size: 1.25rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--primary);
         }
 
         .menu-card-content h3 {
-            font-size: 1.2rem;
+            font-size: 1.125rem;
             font-weight: 600;
-            margin-bottom: 10px;
             color: var(--text-dark);
-            transition: var(--transition);
-        }
-
-        .menu-card:hover .menu-card-content h3 {
-            color: var(--primary-color);
+            margin-bottom: 0.5rem;
         }
 
         .menu-card-content p {
-            color: var(--gray-600);
-            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
             line-height: 1.5;
         }
 
-        /* Pulse animation for notifications */
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(247, 37, 133, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(247, 37, 133, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(247, 37, 133, 0); }
+        .dashboard .menu-card-icon {
+            background: var(--primary);
         }
 
-        .pulse {
-            animation: pulse 2s infinite;
+        .users .menu-card-icon {
+            background: var(--success);
+        }
+
+        .products .menu-card-icon {
+            background: var(--info);
+        }
+
+        .orders .menu-card-icon {
+            background: var(--warning);
+        }
+
+        /* Mobile menu toggle */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-sm);
+            background: var(--primary);
+            color: #fff;
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: -12px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-        }
-
-        /* Animations */
-        @keyframes float {
-            0% {
-                transform: translateY(0) rotate(0deg);
-            }
-            50% {
-                transform: translateY(-20px) rotate(5deg);
-            }
-            100% {
-                transform: translateY(0) rotate(0deg);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            z-index: 1001;
         }
 
         /* Responsive */
-        @media (max-width: 992px) {
+        @media (max-width: 1200px) {
             .sidebar {
-                width: 70px;
-                overflow: visible;
-            }
-
-            .sidebar-header .logo span,
-            .nav-item span {
-                display: none;
+                width: 240px;
             }
 
             .main-content {
-                margin-left: 70px;
+                margin-left: 240px;
             }
 
-            .sidebar:hover {
-                width: 260px;
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
             }
 
-            .sidebar:hover .sidebar-header .logo span,
-            .sidebar:hover .nav-item span {
-                display: inline;
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .search-box input {
+                width: 200px;
             }
         }
 
@@ -585,12 +581,21 @@
             .page-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
+                gap: 1rem;
             }
 
-            .user-menu {
+            .header-actions {
                 width: 100%;
                 justify-content: space-between;
+            }
+
+            .search-box {
+                flex-grow: 1;
+                margin-right: 1rem;
+            }
+
+            .search-box input {
+                width: 100%;
             }
         }
 
@@ -599,300 +604,292 @@
                 grid-template-columns: 1fr;
             }
 
-            .sidebar {
-                width: 0;
-                overflow: hidden;
-                transform: translateX(-100%);
+            .user-info {
+                display: none;
             }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .sidebar.active {
-                width: 260px;
-                transform: translateX(0);
-            }
-
-            .menu-toggle {
-                display: block;
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                z-index: 1100;
-                background: var(--primary-color);
-                color: white;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-                transition: var(--transition);
-            }
-
-            .menu-toggle:hover {
-                transform: scale(1.1);
-            }
-        }
-
-        /* Toggle button for mobile */
-        .menu-toggle {
-            display: none;
-        }
-
-        /* Loading animation */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--gray-200);
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-<!-- Loading overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="loader"></div>
-</div>
-
-<!-- Animated background -->
-<div class="animated-bg">
-    <div class="bg-circle"></div>
-    <div class="bg-circle"></div>
-    <div class="bg-circle"></div>
-</div>
-
-<!-- Mobile menu toggle -->
 <div class="menu-toggle" id="menuToggle">
     <i class="fas fa-bars"></i>
 </div>
 
-<!-- Sidebar -->
-<div class="sidebar" id="sidebar">
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-chevron-left"></i>
+    </div>
     <div class="sidebar-header">
-        <div class="logo">
-            <i class="fas fa-shield-alt"></i>
-            <span>Admin Panel</span>
-        </div>
+        <i class="fas fa-shield-alt"></i>
+        <span>Admin Panel</span>
     </div>
     <div class="sidebar-nav">
-        <a th:href="@{/admin/dashboard}" class="nav-item active">
+        <a href="/templates/dashboard.html" class="nav-item active">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
-        <a th:href="@{/admin/users}" class="nav-item">
+        <a href="/templates/users/list.html" class="nav-item">
             <i class="fas fa-users"></i>
             <span>Foydalanuvchilar</span>
-            <span class="pulse" style="width: 8px; height: 8px; background: var(--warning); margin-left: auto;"></span>
+            <span class="badge" th:text="${totalUsers}">3</span>
         </a>
-        <a th:href="@{/admin/products}" class="nav-item">
+        <a href="/templates/products/list.html" class="nav-item">
             <i class="fas fa-pills"></i>
             <span>Mahsulotlar</span>
         </a>
-        <a th:href="@{/admin/orders}" class="nav-item">
+        <a href="/templates/orders/list.html" class="nav-item">
             <i class="fas fa-shopping-cart"></i>
             <span>Buyurtmalar</span>
-            <span class="pulse" style="width: 8px; height: 8px; background: var(--success); margin-left: auto;"></span>
+            <span class="badge" th:text="${newOrders}">5</span>
         </a>
-        <a th:href="@{/admin/settings}" class="nav-item">
-            <i class="fas fa-cog"></i>
-            <span>Sozlamalar</span>
-        </a>
-        <a th:href="@{/logout}" class="nav-item">
+        <a href="#" class="nav-item">
             <i class="fas fa-sign-out-alt"></i>
             <span>Chiqish</span>
         </a>
     </div>
-</div>
+</nav>
 
-<!-- Main content -->
-<div class="main-content">
-    <div class="page-header">
+<main class="main-content" id="mainContent">
+    <header class="page-header">
         <div class="page-title">
             <h1>Admin Boshqaruv Paneli</h1>
             <p>Tizimning barcha bo'limlarini boshqarish va monitoring qilish</p>
         </div>
-        <div class="user-menu">
-            <div class="user-info">
-                <div class="user-name">Admin Foydalanuvchi</div>
-                <div class="user-role">Super Administrator</div>
+        <div class="header-actions">
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
             </div>
-            <div class="user-avatar">
-                <i class="fas fa-user-shield"></i>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Qidirish...">
+            </div>
+            <div class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-name">Admin Foydalanuvchi</div>
+                    <div class="user-role">Super Administrator</div>
+                </div>
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Stats cards -->
-    <div class="stats-grid">
-        <div class="stat-card stat-1">
+    <section class="stats-grid">
+        <article class="stat-card stat-1">
             <div class="stat-icon">
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-content">
-                <h3 th:text="${totalUsers}">1,248</h3>
+                <h3 id="userCount" th:text="${totalUsers}">1,248</h3>
                 <p>Faol Foydalanuvchilar</p>
             </div>
-        </div>
+        </article>
 
-        <div class="stat-card stat-2">
+        <article class="stat-card stat-2">
             <div class="stat-icon">
                 <i class="fas fa-shopping-cart"></i>
             </div>
             <div class="stat-content">
-                <h3 th:text="${newOrders}">564</h3>
+                <h3 id="orderCount" th:text="${newOrders}">564</h3>
                 <p>Yangi Buyurtmalar</p>
             </div>
-        </div>
+        </article>
 
-        <div class="stat-card stat-3">
+        <article class="stat-card stat-3">
             <div class="stat-icon">
                 <i class="fas fa-pills"></i>
             </div>
             <div class="stat-content">
-                <h3 th:text="${totalProducts}">856</h3>
+                <h3 id="productCount" th:text="${totalProducts}">856</h3>
                 <p>Jami Mahsulotlar</p>
             </div>
-        </div>
+        </article>
 
-        <div class="stat-card stat-4">
+        <article class="stat-card stat-4">
             <div class="stat-icon">
                 <i class="fas fa-chart-line"></i>
             </div>
             <div class="stat-content">
-                <h3 th:text="${successRate} + '%'">92%</h3>
+                <h3 id="successRate" th:text="${successRate} + '%'">92%</h3>
                 <p>Muvaffaqiyat Darajasi</p>
             </div>
+        </article>
+    </section>
+
+    <section class="charts-section">
+        <div class="chart-container">
+            <h3 class="chart-title">Foydalanuvchilar statistikasi</h3>
+            <canvas id="userChart"></canvas>
         </div>
-    </div>
-
-    <!-- Menu cards -->
-    <div class="menu-section">
-        <h2 class="section-title">Asosiy Bo'limlar</h2>
-        <div class="menu-grid">
-            <a th:href="@{/admin/dashboard}" class="menu-card dashboard">
-                <div class="card-header">
-                    <div class="menu-card-icon">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                </div>
-                <div class="menu-card-content">
-                    <h3>Dashboard</h3>
-                    <p>Tizim statistikasi, asosiy ko'rsatkichlar va monitoring vositalari</p>
-                </div>
-            </a>
-
-            <a th:href="@{/admin/users}" class="menu-card users">
-                <div class="card-header">
-                    <div class="menu-card-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                </div>
-                <div class="menu-card-content">
-                    <h3>Foydalanuvchilar</h3>
-                    <p>Foydalanuvchilarni boshqarish, ruxsatlar va rollarni sozlash</p>
-                </div>
-            </a>
-
-            <a th:href="@{/admin/products}" class="menu-card products">
-                <div class="card-header">
-                    <div class="menu-card-icon">
-                        <i class="fas fa-pills"></i>
-                    </div>
-                </div>
-                <div class="menu-card-content">
-                    <h3>Mahsulotlar</h3>
-                    <p>Mahsulotlar katalogi, narxlarni boshqarish va toifalar</p>
-                </div>
-            </a>
-
-            <a th:href="@{/admin/orders}" class="menu-card orders">
-                <div class="card-header">
-                    <div class="menu-card-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                </div>
-                <div class="menu-card-content">
-                    <h3>Buyurtmalar</h3>
-                    <p>Buyurtmalarni ko'rib chiqish, jarayonni boshqarish va tarix</p>
-                </div>
-            </a>
+        <div class="chart-container">
+            <h3 class="chart-title">Buyurtmalar holati</h3>
+            <canvas id="orderChart"></canvas>
         </div>
-    </div>
-</div>
+    </section>
+</main>
 
 <script>
-    // Hide loading overlay when page is loaded
-    window.addEventListener('load', function() {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        setTimeout(function() {
-            loadingOverlay.style.opacity = '0';
-            setTimeout(function() {
-                loadingOverlay.style.display = 'none';
-            }, 500);
-        }, 1000);
-    });
-
     // Mobile menu toggle
-    document.getElementById('menuToggle').addEventListener('click', function() {
+    document.getElementById('menuToggle').addEventListener('click', () => {
         document.getElementById('sidebar').classList.toggle('active');
     });
 
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
+    // Sidebar toggle
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('mainContent').classList.toggle('expanded');
+
+        const icon = document.querySelector('#sidebarToggle i');
+        if (document.getElementById('sidebar').classList.contains('collapsed')) {
+            icon.classList.remove('fa-chevron-left');
+            icon.classList.add('fa-chevron-right');
+        } else {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-left');
+        }
+    });
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+
+        const icon = document.querySelector('#themeToggle i');
+        if (document.body.classList.contains('dark-theme')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+    // Check saved theme
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+        document.querySelector('#themeToggle i').classList.remove('fa-moon');
+        document.querySelector('#themeToggle i').classList.add('fa-sun');
+    }
+
+    // Close sidebar on outside click for mobile
+    document.addEventListener('click', (e) => {
         const sidebar = document.getElementById('sidebar');
         const menuToggle = document.getElementById('menuToggle');
-
-        if (window.innerWidth <= 576 &&
-            !sidebar.contains(event.target) &&
-            !menuToggle.contains(event.target) &&
-            sidebar.classList.contains('active')) {
+        if (
+            window.innerWidth <= 992 &&
+            !sidebar.contains(e.target) &&
+            !menuToggle.contains(e.target) &&
+            sidebar.classList.contains('active')
+        ) {
             sidebar.classList.remove('active');
         }
     });
 
-    // Add scroll animations
-    function checkScroll() {
-        const elements = document.querySelectorAll('.menu-card, .stat-card');
-        elements.forEach(element => {
-            const position = element.getBoundingClientRect();
-
-            // If element is in viewport
-            if(position.top < window.innerHeight - 50) {
-                element.style.animationPlayState = 'running';
+    // Animated counter for stats
+    function animateValue(element, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = Math.floor(progress * (end - start) + start);
+            element.textContent = value.toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
             }
-        });
+        };
+        window.requestAnimationFrame(step);
     }
 
-    // Initial check
-    checkScroll();
+    // Initialize counters
+    document.addEventListener('DOMContentLoaded', () => {
+        animateValue(document.getElementById('userCount'), 0, 1248, 2000);
+        animateValue(document.getElementById('orderCount'), 0, 564, 2000);
+        animateValue(document.getElementById('productCount'), 0, 856, 2000);
 
-    // Check on scroll
-    window.addEventListener('scroll', checkScroll);
+        // Animate percentage
+        const successElement = document.getElementById('successRate');
+        let current = 0;
+        const target = 92;
+        const interval = setInterval(() => {
+            if (current >= target) {
+                clearInterval(interval);
+            } else {
+                current++;
+                successElement.textContent = current + '%';
+            }
+        }, 2000 / target);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // User statistics chart
+        const userCtx = document.getElementById('userChart').getContext('2d');
+        new Chart(userCtx, {
+            type: 'line',
+            data: {
+                labels: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul'],
+                datasets: [{
+                    label: 'Foydalanuvchilar soni',
+                    data: [200, 350, 500, 650, 800, 950, 1248],
+                    borderColor: 'rgba(74, 108, 247, 1)',
+                    backgroundColor: 'rgba(74, 108, 247, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(74, 108, 247, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {display: true, labels: {color: 'var(--text-dark)'}}
+                },
+                scales: {
+                    x: {ticks: {color: 'var(--text-dark)'}},
+                    y: {ticks: {color: 'var(--text-dark)'}, beginAtZero: true}
+                }
+            }
+        });
+
+        // Orders chart
+        const orderCtx = document.getElementById('orderChart').getContext('2d');
+        new Chart(orderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Yangi', 'Jarayonda', 'Yetkazilgan', 'Bekor qilingan'],
+                datasets: [{
+                    data: [150, 200, 180, 34],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {color: 'var(--text-dark)'}
+                    }
+                }
+            }
+        });
+    });
 </script>
 </body>
 </html>
